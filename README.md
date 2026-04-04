@@ -35,6 +35,15 @@ This repository contains the complete product specification, business strategy, 
 | [10 — Compliance & Security](./10-COMPLIANCE-AND-SECURITY.md) | HIPAA considerations, AI safety rules, data handling, state-specific notes |
 | [11 — Build Plan](./11-BUILD-PLAN.md) | 30-day build plan with daily tasks and weekly milestones |
 
+### Compliance & Legal
+
+| Document | Description |
+|----------|-------------|
+| [13 — Data Handling Disclosure](./13-DATA-HANDLING-DISCLOSURE.md) | Full disclosure for pilot facilities: what data is collected, how AI is used, how data is protected, current compliance status |
+| [14 — Pilot Partner Agreement](./14-PILOT-PARTNER-AGREEMENT.md) | Design partner informed consent and terms: commitments, AI acknowledgment, data ownership, liability |
+| [15 — Resident Notification Template](./15-RESIDENT-NOTIFICATION-TEMPLATE.md) | Template letter for facilities to inform residents about AI-assisted documentation |
+| [16 — Compliance Action Tracker](./16-COMPLIANCE-ACTION-TRACKER.md) | Checklist of all compliance actions: pre-launch, at launch, months 1–6, ongoing quarterly items, cost estimates |
+
 ---
 
 ## Quick Start
