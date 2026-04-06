@@ -138,6 +138,9 @@ Complete these before Day 1:
 
 ### Day 10: Voice Transcription
 
+> **BAA Dependency:** Verify OpenAI Whisper BAA availability before shipping voice with real PHI. If BAA is unavailable, voice input should be disabled for production use with real resident data until BAA is signed. Web Speech API (browser-native) can serve as an interim fallback but has lower accuracy. This must be resolved before Day 30 launch.
+
+- [ ] Confirm OpenAI Whisper BAA status (BLOCKER for production voice use)
 - [ ] Install and configure OpenAI SDK for Whisper API
 - [ ] Build /api/transcribe route:
   - Accept audio blob via multipart form POST
@@ -165,7 +168,7 @@ Note: The full note input stack (text + voice) is now complete before incident d
   - If yes, proceed to incident report generation
   - If no, save as normal note with `flagged_as_incident = true`
 
-### Day 11: Incident Report Generation
+### Day 12: Incident Report Generation
 
 - [ ] Implement incident report system prompt
 - [ ] Write migration for `incident_reports` table + RLS
@@ -175,7 +178,7 @@ Note: The full note input stack (text + voice) is now complete before incident d
   - Save button
 - [ ] Link incident report to source note
 
-### Day 12: Incident Management
+### Day 13: Incident Management
 
 - [ ] Admin incident list view: filter by status, severity, resident, date
 - [ ] Incident detail view for admin:
@@ -186,7 +189,7 @@ Note: The full note input stack (text + voice) is now complete before incident d
   - Set follow-up date
 - [ ] Dashboard flag indicator: "X open incidents"
 
-### Day 13: Error Handling and Edge Cases
+### Day 14: Error Handling and Edge Cases
 
 - [ ] Claude API timeout handling: save raw note, queue for background structuring
 - [ ] Empty input validation
@@ -249,13 +252,16 @@ Note: The full note input stack (text + voice) is now complete before incident d
 
 ### Day 19: Weekly Summary Generation
 
+- [ ] Write migration for `weekly_summaries` table + RLS
 - [ ] Implement weekly summary system prompt
-- [ ] Set up Vercel Cron job (Sunday 6 PM in facility timezone)
+- [ ] Set up Vercel Cron job:
+  - Run hourly, check each org's timezone against 6 PM Sunday
+  - For orgs where it is 6 PM Sunday: generate summaries
 - [ ] Cron handler:
   - For each active resident with notes this week
   - Fetch all notes from past 7 days
   - Send to Claude for summary generation
-  - Save as note with type "summary" and status "pending_review"
+  - Save to `weekly_summaries` table with status "pending_review"
 
 ### Day 20: Summary Review UI + Dashboard
 
@@ -382,15 +388,17 @@ Note: The full note input stack (text + voice) is now complete before incident d
 
 | Priority | Task | Trigger |
 |----------|------|---------|
-| 1 | Fix top 3 usability issues from pilot feedback | Week 1 feedback calls |
-| 1a | Sign OpenAI BAA for Whisper API | Before voice feature goes live in production with real resident data |
-| 2 | Add audit logging | Before scaling beyond pilots |
-| 3 | Iterate on voice input based on pilot feedback | If pilot caregivers report transcription issues |
-| 4 | Sign Anthropic and Supabase BAAs | Before first paying customer |
-| 5 | Resolve Vercel BAA gap | Month 2–3 |
-| 6 | SMS delivery for family updates (Twilio) | If families request it |
-| 7 | Print/export view for survey preparation | If pilots flag survey prep as a use case |
-| 8 | Multi-language input documentation | If pilots have multilingual staff |
+| 1 | Sign Anthropic and Supabase BAAs | **BLOCKER** — before first paying customer |
+| 1a | Sign OpenAI BAA for Whisper API | **BLOCKER** — before voice feature goes live with real PHI |
+| 1b | Resolve Vercel BAA gap (Enterprise, Railway, or self-host) | **BLOCKER** — decision needed by month 2, resolved by month 3 |
+| 2 | Fix top 3 usability issues from pilot feedback | Week 1 feedback calls |
+| 3 | Add audit logging (`audit_log` table per doc 10) | Before scaling beyond pilots |
+| 4 | Iterate on voice input based on pilot feedback | If pilot caregivers report transcription issues |
+| 5 | Create 3 case studies from pilot partners | Before Synkwise outreach (month 6) |
+| 6 | Test $99/month entry tier | If trial conversion < 30% at month 3 |
+| 7 | SMS delivery for family updates (Twilio) | If families request it |
+| 8 | Print/export view for survey preparation | If pilots flag survey prep as a use case |
+| 9 | Multi-language input documentation | If pilots have multilingual staff |
 
 ---
 

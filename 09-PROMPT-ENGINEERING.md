@@ -297,6 +297,23 @@ OUTPUT FORMAT:
 }
 ```
 
+### User Prompt Template
+
+```
+Facility: {{facility_name}}
+Resident: {{resident_first_name}} {{resident_last_name}}
+Known conditions: {{conditions}}
+Week: {{week_start}} to {{week_end}}
+
+Shift notes from this week:
+---
+{{#each notes}}
+[{{this.created_at}} — {{this.author_name}} — {{this.shift}}]
+{{this.structured_output}}
+---
+{{/each}}
+```
+
 ---
 
 ## Prompt Testing Criteria

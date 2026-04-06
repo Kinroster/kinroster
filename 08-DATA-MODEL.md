@@ -2,7 +2,7 @@
 
 ## Overview
 
-CareNote's data model is designed around six core entities: Organizations, Users, Residents, Notes, Incident Reports, and Family Communications. All data is scoped to an organization and protected by Row Level Security (RLS).
+CareNote's data model is designed around seven core entities: Organizations, Users, Residents, Notes, Incident Reports, Family Communications, and Weekly Summaries. All data is scoped to an organization and protected by Row Level Security (RLS).
 
 The raw caregiver input is always stored alongside the AI-structured output. The caregiver's words are the legal source of truth; the structured output is a convenience layer.
 
@@ -42,10 +42,27 @@ The raw caregiver input is always stored alongside the AI-structured output. The
              │                    │ care_notes_context   │
              │                    │ status              │
              │                    │ created_at          │
-             │                    └──┬─────────┬────────┘
-             │                       │         │
-             │              1:many   │         │  1:many
-             │                       │         │
+             │                    └──┬────┬────┬────────┘
+             │                       │    │    │
+             │                       │    │    │  1:many
+             │                       │    │    │
+             │                       │    │ ┌──▼──────────────────┐
+             │                       │    │ │  weekly_summary      │
+             │                       │    │ │─────────────────────│
+             │                       │    │ │ id (PK)              │
+             │                       │    │ │ organization_id      │
+             │                       │    │ │ resident_id          │
+             │                       │    │ │ week_start/end       │
+             │                       │    │ │ summary_text         │
+             │                       │    │ │ key_trends[]         │
+             │                       │    │ │ concerns[]           │
+             │                       │    │ │ status               │
+             │                       │    │ │ reviewed_by          │
+             │                       │    │ │ created_at           │
+             │                       │    │ └─────────────────────┘
+             │                       │    │
+             │              1:many   │    │  1:many
+             │                       │    │
              │            ┌──────────▼──┐  ┌───▼─────────────────┐
              │            │family_contact│  │       note           │
              │            │─────────────│  │─────────────────────│
@@ -56,13 +73,13 @@ The raw caregiver input is always stored alongside the AI-structured output. The
              │            │ email       │  │ note_type            │  user writes
              │            │ phone       │  │ raw_input            │  notes
              │            │ is_primary  │  │ structured_output    │
-             │            │ receives_   │  │ is_edited            │
-             │            │  updates    │  │ edited_output        │
+             │            │ receives_   │  │ is_structured        │
+             │            │  updates    │  │ is_edited            │
              │            │ created_at  │  │ shift                │
              │            └──────┬──────┘  │ flagged_as_incident  │
+             │                   │         │ manually_flagged     │
              │                   │         │ metadata (jsonb)     │
              │                   │         │ created_at           │
-             │                   │         │ updated_at           │
              │                   │         └───┬─────────────────┘
              │                   │             │
              │                   │             │  1:0..1
@@ -78,7 +95,9 @@ The raw caregiver input is always stored alongside the AI-structured output. The
              │                   │         │ severity             │
              │                   │         │ status               │
              │                   │         │ reviewed_by          │
+             │                   │         │ reviewed_at          │
              │                   │         │ family_notified      │
+             │                   │         │ family_notified_at   │
              │                   │         │ follow_up_date       │
              │                   │         │ created_at           │
              │                   │         │ updated_at           │
@@ -216,10 +235,14 @@ CREATE TABLE notes (
   note_type TEXT NOT NULL CHECK (note_type IN ('shift_note', 'incident', 'observation', 'summary')),
   raw_input TEXT NOT NULL,            -- Original caregiver text (source of truth)
   structured_output TEXT,             -- Claude-generated structured version
+  is_structured BOOLEAN NOT NULL DEFAULT false, -- False until Claude processes successfully
+  structuring_error TEXT,             -- Error message if Claude structuring failed
+  last_structuring_attempt_at TIMESTAMPTZ, -- For retry backoff
   is_edited BOOLEAN NOT NULL DEFAULT false,
   edited_output TEXT,                 -- Caregiver's edited version of structured output
   shift TEXT CHECK (shift IN ('morning', 'afternoon', 'night')),
   flagged_as_incident BOOLEAN NOT NULL DEFAULT false,
+  manually_flagged BOOLEAN NOT NULL DEFAULT false, -- True if caregiver manually flagged (vs AI)
   metadata JSONB DEFAULT '{}',        -- Extracted tags: mood, appetite, activities, etc.
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -250,8 +273,10 @@ CREATE TABLE incident_reports (
   status TEXT NOT NULL DEFAULT 'open'
     CHECK (status IN ('open', 'reviewed', 'closed')),
   reviewed_by UUID REFERENCES users(id),
+  reviewed_at TIMESTAMPTZ,            -- When admin reviewed the incident
   manager_notes TEXT,
   family_notified BOOLEAN NOT NULL DEFAULT false,
+  family_notified_at TIMESTAMPTZ,     -- When family was notified
   follow_up_date DATE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -289,6 +314,58 @@ ALTER TABLE family_communications ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_family_comms_resident ON family_communications (resident_id, created_at DESC);
 CREATE INDEX idx_family_comms_org ON family_communications (organization_id, created_at DESC);
+CREATE INDEX idx_family_comms_status ON family_communications (organization_id, status);
+```
+
+### weekly_summaries
+
+Auto-generated weekly care summaries for each resident, reviewed by admins.
+
+```sql
+CREATE TABLE weekly_summaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  resident_id UUID NOT NULL REFERENCES residents(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,           -- Monday of the summary week
+  week_end DATE NOT NULL,             -- Sunday of the summary week
+  summary_text TEXT NOT NULL,         -- Claude-generated summary content
+  key_trends TEXT[],                  -- Array of identified trends
+  concerns TEXT[],                    -- Array of concerns needing follow-up
+  incidents_count INTEGER NOT NULL DEFAULT 0,
+  source_note_ids UUID[] DEFAULT '{}', -- Notes used to generate this summary
+  status TEXT NOT NULL DEFAULT 'pending_review'
+    CHECK (status IN ('pending_review', 'approved', 'regenerating')),
+  reviewed_by UUID REFERENCES users(id),
+  reviewed_at TIMESTAMPTZ,
+  metadata JSONB DEFAULT '{}',        -- Model used, tokens, generation details
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (resident_id, week_start)    -- One summary per resident per week
+);
+
+ALTER TABLE weekly_summaries ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_weekly_summaries_org ON weekly_summaries (organization_id, week_start DESC);
+CREATE INDEX idx_weekly_summaries_resident ON weekly_summaries (resident_id, week_start DESC);
+CREATE INDEX idx_weekly_summaries_status ON weekly_summaries (organization_id, status);
+```
+
+---
+
+### Additional Indexes
+
+```sql
+-- Notes pending structuring (for retry job)
+CREATE INDEX idx_notes_pending_structuring ON notes (is_structured, last_structuring_attempt_at)
+  WHERE is_structured = false;
+
+-- Incident-flagged notes
+CREATE INDEX idx_notes_flagged ON notes (organization_id, created_at DESC)
+  WHERE flagged_as_incident = true;
+
+-- Open incidents for dashboard
+CREATE INDEX idx_incidents_open ON incident_reports (organization_id, created_at DESC)
+  WHERE status = 'open';
 ```
 
 ---
@@ -340,6 +417,7 @@ AND organization_id = $1;
 | notes | Own org only | Any authenticated user in org | Author only (within 1 hour) | — (notes are never deleted) |
 | incident_reports | Own org only | Any authenticated user in org | Admin only | — |
 | family_communications | Admin only | Admin only | Admin only | — |
+| weekly_summaries | Own org only | System (cron job) | Admin only | — |
 
 ---
 
@@ -362,6 +440,7 @@ supabase migration new create_residents
 supabase migration new create_notes
 supabase migration new create_incidents
 supabase migration new create_family_comms
+supabase migration new create_weekly_summaries
 supabase db push                    # Apply to remote
 ```
 
