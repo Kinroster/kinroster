@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil } from "lucide-react";
+import { Pencil, Mail } from "lucide-react";
 import { NoteTimeline } from "@/components/notes/note-timeline";
 import { NoteInputForm } from "@/components/notes/note-input-form";
 import { FamilyContactList } from "@/components/residents/family-contact-list";
@@ -72,12 +72,20 @@ export default async function ResidentDetailPage({
           </div>
         </div>
         {isAdmin && (
-          <Link href={`/residents/${id}/edit`}>
-            <Button variant="outline" size="sm">
-              <Pencil className="mr-1 h-3 w-3" />
-              Edit
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href={`/family/${id}/new`}>
+              <Button variant="outline" size="sm">
+                <Mail className="mr-1 h-3 w-3" />
+                Family Update
+              </Button>
+            </Link>
+            <Link href={`/residents/${id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="mr-1 h-3 w-3" />
+                Edit
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
