@@ -1,0 +1,8 @@
+version: 3
+tunnels:
+  app:
+    addr: 3000
+    proto: http
+  supabase:
+    addr: 54321
+    proto: http
