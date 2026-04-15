@@ -4,497 +4,813 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
-export interface Database {
+export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      organizations: {
-        Row: {
-          id: string;
-          name: string;
-          type: "rcfe" | "home_care" | "other";
-          timezone: string;
-          email_from_name: string | null;
-          email_reply_to: string | null;
-          subscription_status: "trial" | "active" | "past_due" | "canceled";
-          trial_ends_at: string | null;
-          stripe_customer_id: string | null;
-          stripe_subscription_id: string | null;
-          settings: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          type: "rcfe" | "home_care" | "other";
-          timezone?: string;
-          email_from_name?: string | null;
-          email_reply_to?: string | null;
-          subscription_status?: "trial" | "active" | "past_due" | "canceled";
-          trial_ends_at?: string | null;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
-          settings?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          type?: "rcfe" | "home_care" | "other";
-          timezone?: string;
-          email_from_name?: string | null;
-          email_reply_to?: string | null;
-          subscription_status?: "trial" | "active" | "past_due" | "canceled";
-          trial_ends_at?: string | null;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
-          settings?: Json;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "";
-            columns: [];
-            isOneToOne: false;
-            referencedRelation: "";
-            referencedColumns: [];
-          },
-        ];
-      };
-      users: {
-        Row: {
-          id: string;
-          organization_id: string;
-          email: string;
-          full_name: string;
-          role: "admin" | "caregiver";
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          organization_id: string;
-          email: string;
-          full_name: string;
-          role?: "admin" | "caregiver";
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          organization_id?: string;
-          email?: string;
-          full_name?: string;
-          role?: "admin" | "caregiver";
-          is_active?: boolean;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "users_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      residents: {
-        Row: {
-          id: string;
-          organization_id: string;
-          first_name: string;
-          last_name: string;
-          date_of_birth: string | null;
-          move_in_date: string | null;
-          room_number: string | null;
-          conditions: string | null;
-          preferences: string | null;
-          care_notes_context: string | null;
-          status: "active" | "discharged" | "deceased";
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          first_name: string;
-          last_name: string;
-          date_of_birth?: string | null;
-          move_in_date?: string | null;
-          room_number?: string | null;
-          conditions?: string | null;
-          preferences?: string | null;
-          care_notes_context?: string | null;
-          status?: "active" | "discharged" | "deceased";
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          first_name?: string;
-          last_name?: string;
-          date_of_birth?: string | null;
-          move_in_date?: string | null;
-          room_number?: string | null;
-          conditions?: string | null;
-          preferences?: string | null;
-          care_notes_context?: string | null;
-          status?: "active" | "discharged" | "deceased";
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "residents_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      family_contacts: {
-        Row: {
-          id: string;
-          resident_id: string;
-          name: string;
-          relationship: string;
-          email: string | null;
-          phone: string | null;
-          is_primary: boolean;
-          receives_updates: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          resident_id: string;
-          name: string;
-          relationship: string;
-          email?: string | null;
-          phone?: string | null;
-          is_primary?: boolean;
-          receives_updates?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          name?: string;
-          relationship?: string;
-          email?: string | null;
-          phone?: string | null;
-          is_primary?: boolean;
-          receives_updates?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "family_contacts_resident_id_fkey";
-            columns: ["resident_id"];
-            isOneToOne: false;
-            referencedRelation: "residents";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      notes: {
-        Row: {
-          id: string;
-          organization_id: string;
-          resident_id: string;
-          author_id: string;
-          note_type: "shift_note" | "incident" | "observation" | "summary";
-          raw_input: string;
-          structured_output: string | null;
-          is_structured: boolean;
-          structuring_error: string | null;
-          last_structuring_attempt_at: string | null;
-          is_edited: boolean;
-          edited_output: string | null;
-          shift: "morning" | "afternoon" | "night" | null;
-          flagged_as_incident: boolean;
-          manually_flagged: boolean;
-          metadata: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          resident_id: string;
-          author_id: string;
-          note_type: "shift_note" | "incident" | "observation" | "summary";
-          raw_input: string;
-          structured_output?: string | null;
-          is_structured?: boolean;
-          structuring_error?: string | null;
-          last_structuring_attempt_at?: string | null;
-          is_edited?: boolean;
-          edited_output?: string | null;
-          shift?: "morning" | "afternoon" | "night" | null;
-          flagged_as_incident?: boolean;
-          manually_flagged?: boolean;
-          metadata?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          structured_output?: string | null;
-          is_structured?: boolean;
-          structuring_error?: string | null;
-          last_structuring_attempt_at?: string | null;
-          is_edited?: boolean;
-          edited_output?: string | null;
-          flagged_as_incident?: boolean;
-          manually_flagged?: boolean;
-          metadata?: Json;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "notes_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "notes_resident_id_fkey";
-            columns: ["resident_id"];
-            isOneToOne: false;
-            referencedRelation: "residents";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "notes_author_id_fkey";
-            columns: ["author_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      incident_reports: {
-        Row: {
-          id: string;
-          note_id: string;
-          organization_id: string;
-          resident_id: string;
-          report_text: string;
-          incident_type: string;
-          severity: "low" | "medium" | "high";
-          status: "open" | "reviewed" | "closed";
-          reviewed_by: string | null;
-          reviewed_at: string | null;
-          manager_notes: string | null;
-          family_notified: boolean;
-          family_notified_at: string | null;
-          follow_up_date: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          note_id: string;
-          organization_id: string;
-          resident_id: string;
-          report_text: string;
-          incident_type: string;
-          severity?: "low" | "medium" | "high";
-          status?: "open" | "reviewed" | "closed";
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          manager_notes?: string | null;
-          family_notified?: boolean;
-          family_notified_at?: string | null;
-          follow_up_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          report_text?: string;
-          incident_type?: string;
-          severity?: "low" | "medium" | "high";
-          status?: "open" | "reviewed" | "closed";
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          manager_notes?: string | null;
-          family_notified?: boolean;
-          family_notified_at?: string | null;
-          follow_up_date?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "incident_reports_note_id_fkey";
-            columns: ["note_id"];
-            isOneToOne: false;
-            referencedRelation: "notes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "incident_reports_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "incident_reports_resident_id_fkey";
-            columns: ["resident_id"];
-            isOneToOne: false;
-            referencedRelation: "residents";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       family_communications: {
         Row: {
-          id: string;
-          organization_id: string;
-          resident_id: string;
-          generated_by: string;
-          recipient_contact_id: string;
-          subject: string;
-          body: string;
-          source_note_ids: string[];
-          date_range_start: string;
-          date_range_end: string;
-          status: "draft" | "sent" | "failed";
-          sent_at: string | null;
-          created_at: string;
-        };
+          body: string
+          created_at: string
+          date_range_end: string
+          date_range_start: string
+          generated_by: string
+          id: string
+          organization_id: string
+          recipient_contact_id: string
+          resident_id: string
+          sent_at: string | null
+          source_note_ids: string[] | null
+          status: string
+          subject: string
+        }
         Insert: {
-          id?: string;
-          organization_id: string;
-          resident_id: string;
-          generated_by: string;
-          recipient_contact_id: string;
-          subject: string;
-          body: string;
-          source_note_ids?: string[];
-          date_range_start: string;
-          date_range_end: string;
-          status?: "draft" | "sent" | "failed";
-          sent_at?: string | null;
-          created_at?: string;
-        };
+          body: string
+          created_at?: string
+          date_range_end: string
+          date_range_start: string
+          generated_by: string
+          id?: string
+          organization_id: string
+          recipient_contact_id: string
+          resident_id: string
+          sent_at?: string | null
+          source_note_ids?: string[] | null
+          status?: string
+          subject: string
+        }
         Update: {
-          subject?: string;
-          body?: string;
-          source_note_ids?: string[];
-          status?: "draft" | "sent" | "failed";
-          sent_at?: string | null;
-        };
+          body?: string
+          created_at?: string
+          date_range_end?: string
+          date_range_start?: string
+          generated_by?: string
+          id?: string
+          organization_id?: string
+          recipient_contact_id?: string
+          resident_id?: string
+          sent_at?: string | null
+          source_note_ids?: string[] | null
+          status?: string
+          subject?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "family_communications_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
+            foreignKeyName: "family_communications_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "family_communications_resident_id_fkey";
-            columns: ["resident_id"];
-            isOneToOne: false;
-            referencedRelation: "residents";
-            referencedColumns: ["id"];
+            foreignKeyName: "family_communications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "family_communications_generated_by_fkey";
-            columns: ["generated_by"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            foreignKeyName: "family_communications_recipient_contact_id_fkey"
+            columns: ["recipient_contact_id"]
+            isOneToOne: false
+            referencedRelation: "family_contacts"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "family_communications_recipient_contact_id_fkey";
-            columns: ["recipient_contact_id"];
-            isOneToOne: false;
-            referencedRelation: "family_contacts";
-            referencedColumns: ["id"];
+            foreignKeyName: "family_communications_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
+      family_contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_primary: boolean
+          name: string
+          phone: string | null
+          receives_updates: boolean
+          relationship: string
+          resident_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name: string
+          phone?: string | null
+          receives_updates?: boolean
+          relationship: string
+          resident_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name?: string
+          phone?: string | null
+          receives_updates?: boolean
+          relationship?: string
+          resident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_contacts_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_reports: {
+        Row: {
+          created_at: string
+          family_notified: boolean
+          family_notified_at: string | null
+          follow_up_date: string | null
+          id: string
+          incident_type: string
+          manager_notes: string | null
+          note_id: string
+          organization_id: string
+          report_text: string
+          resident_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_notified?: boolean
+          family_notified_at?: string | null
+          follow_up_date?: string | null
+          id?: string
+          incident_type: string
+          manager_notes?: string | null
+          note_id: string
+          organization_id: string
+          report_text: string
+          resident_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_notified?: boolean
+          family_notified_at?: string | null
+          follow_up_date?: string | null
+          id?: string
+          incident_type?: string
+          manager_notes?: string | null
+          note_id?: string
+          organization_id?: string
+          report_text?: string
+          resident_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          edited_output: string | null
+          flagged_as_incident: boolean
+          id: string
+          is_edited: boolean
+          is_structured: boolean
+          last_structuring_attempt_at: string | null
+          manually_flagged: boolean
+          metadata: Json | null
+          note_type: string
+          organization_id: string
+          raw_input: string
+          resident_id: string
+          shift: string | null
+          structured_output: string | null
+          structuring_error: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          edited_output?: string | null
+          flagged_as_incident?: boolean
+          id?: string
+          is_edited?: boolean
+          is_structured?: boolean
+          last_structuring_attempt_at?: string | null
+          manually_flagged?: boolean
+          metadata?: Json | null
+          note_type: string
+          organization_id: string
+          raw_input: string
+          resident_id: string
+          shift?: string | null
+          structured_output?: string | null
+          structuring_error?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          edited_output?: string | null
+          flagged_as_incident?: boolean
+          id?: string
+          is_edited?: boolean
+          is_structured?: boolean
+          last_structuring_attempt_at?: string | null
+          manually_flagged?: boolean
+          metadata?: Json | null
+          note_type?: string
+          organization_id?: string
+          raw_input?: string
+          resident_id?: string
+          shift?: string | null
+          structured_output?: string | null
+          structuring_error?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          email_from_name: string | null
+          email_reply_to: string | null
+          id: string
+          name: string
+          settings: Json | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
+          timezone: string
+          trial_ends_at: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_from_name?: string | null
+          email_reply_to?: string | null
+          id?: string
+          name: string
+          settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          timezone?: string
+          trial_ends_at?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_from_name?: string | null
+          email_reply_to?: string | null
+          id?: string
+          name?: string
+          settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          timezone?: string
+          trial_ends_at?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      residents: {
+        Row: {
+          care_notes_context: string | null
+          conditions: string | null
+          created_at: string
+          date_of_birth: string | null
+          first_name: string
+          id: string
+          last_name: string
+          move_in_date: string | null
+          organization_id: string
+          preferences: string | null
+          room_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          care_notes_context?: string | null
+          conditions?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          move_in_date?: string | null
+          organization_id: string
+          preferences?: string | null
+          room_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          care_notes_context?: string | null
+          conditions?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          move_in_date?: string | null
+          organization_id?: string
+          preferences?: string | null
+          room_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "residents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean
+          organization_id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_sessions: {
+        Row: {
+          call_type: string
+          caregiver_id: string
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          error_message: string | null
+          full_transcript: string | null
+          id: string
+          metadata: Json | null
+          note_id: string | null
+          organization_id: string
+          resident_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          vapi_call_id: string | null
+        }
+        Insert: {
+          call_type?: string
+          caregiver_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_message?: string | null
+          full_transcript?: string | null
+          id?: string
+          metadata?: Json | null
+          note_id?: string | null
+          organization_id: string
+          resident_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          vapi_call_id?: string | null
+        }
+        Update: {
+          call_type?: string
+          caregiver_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_message?: string | null
+          full_transcript?: string | null
+          id?: string
+          metadata?: Json | null
+          note_id?: string | null
+          organization_id?: string
+          resident_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          vapi_call_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_sessions_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_sessions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_sessions_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_transcripts: {
+        Row: {
+          created_at: string
+          id: string
+          offset_ms: number | null
+          role: string
+          session_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offset_ms?: number | null
+          role: string
+          session_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offset_ms?: number | null
+          role?: string
+          session_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_transcripts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_summaries: {
         Row: {
-          id: string;
-          organization_id: string;
-          resident_id: string;
-          week_start: string;
-          week_end: string;
-          summary_text: string;
-          key_trends: string[];
-          concerns: string[];
-          incidents_count: number;
-          source_note_ids: string[];
-          status: "pending_review" | "approved" | "regenerating";
-          reviewed_by: string | null;
-          reviewed_at: string | null;
-          metadata: Json;
-          created_at: string;
-          updated_at: string;
-        };
+          concerns: string[] | null
+          created_at: string
+          id: string
+          incidents_count: number
+          key_trends: string[] | null
+          metadata: Json | null
+          organization_id: string
+          resident_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_note_ids: string[] | null
+          status: string
+          summary_text: string
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
         Insert: {
-          id?: string;
-          organization_id: string;
-          resident_id: string;
-          week_start: string;
-          week_end: string;
-          summary_text: string;
-          key_trends?: string[];
-          concerns?: string[];
-          incidents_count?: number;
-          source_note_ids?: string[];
-          status?: "pending_review" | "approved" | "regenerating";
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          metadata?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
+          concerns?: string[] | null
+          created_at?: string
+          id?: string
+          incidents_count?: number
+          key_trends?: string[] | null
+          metadata?: Json | null
+          organization_id: string
+          resident_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_note_ids?: string[] | null
+          status?: string
+          summary_text: string
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
         Update: {
-          summary_text?: string;
-          key_trends?: string[];
-          concerns?: string[];
-          incidents_count?: number;
-          status?: "pending_review" | "approved" | "regenerating";
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          metadata?: Json;
-          updated_at?: string;
-        };
+          concerns?: string[] | null
+          created_at?: string
+          id?: string
+          incidents_count?: number
+          key_trends?: string[] | null
+          metadata?: Json | null
+          organization_id?: string
+          resident_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_note_ids?: string[] | null
+          status?: string
+          summary_text?: string
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "weekly_summaries_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
+            foreignKeyName: "weekly_summaries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "weekly_summaries_resident_id_fkey";
-            columns: ["resident_id"];
-            isOneToOne: false;
-            referencedRelation: "residents";
-            referencedColumns: ["id"];
+            foreignKeyName: "weekly_summaries_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-  };
+          {
+            foreignKeyName: "weekly_summaries_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      get_user_org_id: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
-// Convenience types
-export type Organization = Database["public"]["Tables"]["organizations"]["Row"];
-export type User = Database["public"]["Tables"]["users"]["Row"];
-export type Resident = Database["public"]["Tables"]["residents"]["Row"];
-export type FamilyContact = Database["public"]["Tables"]["family_contacts"]["Row"];
-export type Note = Database["public"]["Tables"]["notes"]["Row"];
-export type IncidentReport = Database["public"]["Tables"]["incident_reports"]["Row"];
-export type FamilyCommunication = Database["public"]["Tables"]["family_communications"]["Row"];
-export type WeeklySummary = Database["public"]["Tables"]["weekly_summaries"]["Row"];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {},
+  },
+} as const
+

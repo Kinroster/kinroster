@@ -21,6 +21,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.101.1",
+    "@vapi-ai/server-sdk": "^1.1.0",
+    "@vapi-ai/web": "^2.5.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

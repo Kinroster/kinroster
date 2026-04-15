@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Pencil, Mail } from "lucide-react";
 import { NoteTimeline } from "@/components/notes/note-timeline";
 import { NoteInputForm } from "@/components/notes/note-input-form";
+import { VoiceCallButton } from "@/components/notes/voice-call-button";
 import { FamilyContactList } from "@/components/residents/family-contact-list";
 import type { Resident, FamilyContact } from "@/types/database";
 
@@ -120,7 +121,10 @@ export default async function ResidentDetailPage({
 
       {/* Note input */}
       <div className="mb-6">
-        <h3 className="mb-3 text-lg font-medium">Add Note</h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-medium">Add Note</h3>
+          <VoiceCallButton residentId={id} />
+        </div>
         <NoteInputForm
           residentId={id}
           organizationId={user.organization_id}

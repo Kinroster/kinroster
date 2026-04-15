@@ -15,7 +15,7 @@ interface ClaudeCallOptions {
 }
 
 export async function callClaude({
-  model = "claude-sonnet-4-6-20250514",
+  model = "claude-sonnet-4-6",
   systemPrompt,
   userPrompt,
   maxTokens = 1024,
