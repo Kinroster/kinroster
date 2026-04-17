@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 interface SendEmailParams {
   to: string;
@@ -17,6 +19,10 @@ export async function sendFamilyEmail({
   subject,
   body,
 }: SendEmailParams): Promise<{ id: string }> {
+  if (!resend) {
+    throw new Error("Email sending is not configured (RESEND_API_KEY missing)");
+  }
+
   const html = buildEmailHtml(body, fromName);
 
   const { data, error } = await resend.emails.send({
