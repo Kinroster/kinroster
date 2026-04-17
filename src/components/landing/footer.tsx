@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Logo } from "@/components/logo"
 
 export function Footer() {
@@ -11,18 +12,18 @@ export function Footer() {
 
           {/* Links */}
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-foreground">
               Privacy Policy
-            </a>
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            </Link>
+            <Link href="/terms" className="text-muted-foreground transition-colors hover:text-foreground">
               Terms of Service
-            </a>
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            </Link>
+            <Link href="/hipaa" className="text-muted-foreground transition-colors hover:text-foreground">
               HIPAA Compliance
-            </a>
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            </Link>
+            <Link href="/support" className="text-muted-foreground transition-colors hover:text-foreground">
               Support
-            </a>
+            </Link>
           </nav>
         </div>
 
