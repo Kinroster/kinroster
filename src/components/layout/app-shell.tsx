@@ -21,6 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { User, Organization } from "@/types/database";
@@ -62,9 +63,7 @@ export function AppShell({
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center justify-between px-4">
-          <h1 className="text-lg font-semibold">
-            {user.organizations.name}
-          </h1>
+          <Logo href="/today" size="sm" />
           <div className="flex items-center gap-1">
             <ThemeToggle />
             <Sheet>

@@ -1,8 +1,9 @@
 "use client"
 
-import { Activity, Menu, X, LogIn } from "lucide-react"
+import { Menu, X, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Logo } from "@/components/logo"
 import { useState } from "react"
 import Link from "next/link"
 
@@ -12,19 +13,7 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Activity className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold tracking-tight text-foreground">
-              CareNote
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Clinical Voice Assistant
-            </span>
-          </div>
-        </div>
+        <Logo />
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex">
