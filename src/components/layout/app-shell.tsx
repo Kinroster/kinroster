@@ -11,6 +11,7 @@ import {
   UserPlus,
   CreditCard,
   LogOut,
+  Mic,
 } from "lucide-react";
 import {
   Sheet,
@@ -33,6 +34,7 @@ import { AlertTriangle } from "lucide-react";
 const navItems = [
   { href: "/today", label: "Today", icon: CalendarDays, adminOnly: false },
   { href: "/residents", label: "Residents", icon: Users, adminOnly: false },
+  { href: "/voice-sessions", label: "Calls", icon: Mic, adminOnly: false },
   { href: "/incidents", label: "Incidents", icon: AlertTriangle, adminOnly: true },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
 ];
