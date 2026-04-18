@@ -12,7 +12,7 @@ test.describe("Authentication", () => {
     await expect(page.getByText("Welcome back")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign In", exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Send Magic Link" })
     ).toBeVisible();
@@ -24,7 +24,7 @@ test.describe("Authentication", () => {
   test("signup page renders correctly", async ({ page }) => {
     await page.goto("/signup");
 
-    await expect(page.getByText("Create Account")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Create Account" })).toBeVisible();
     await expect(page.getByText("Start your 14-day free trial")).toBeVisible();
     await expect(page.getByLabel("Your Full Name")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
@@ -59,7 +59,6 @@ test.describe("Authentication", () => {
   test("shows error for empty login submission", async ({ page }) => {
     await page.goto("/login");
 
-    // HTML5 validation should prevent submission with empty fields
     const emailInput = page.getByLabel("Email");
     await expect(emailInput).toHaveAttribute("required");
   });
