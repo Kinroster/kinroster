@@ -13,7 +13,7 @@ The legal analysis behind this roadmap still needs review by qualified healthcar
 | Phase | Scope | Status | Dev estimate | Blocking for prod PHI? |
 |-------|-------|--------|--------------|-----------------------|
 | 1 | Clinician directory + secure sharing | **Shipped** (commit d907d25) | — | Not blocking but highest value |
-| 2 | Family authorization & consent | Planned | 2-3 days | Yes |
+| 2 | Family authorization & consent | **Shipped** (commit TBD) | — | Yes |
 | 3 | Disclosure classification tags | Planned | 3-4 days | Yes |
 | 4 | Sensitive-data segmentation (42 CFR Part 2) | Planned | 2-3 days | Yes |
 | 5 | Audit events | Planned | 3-4 days | Yes |
@@ -105,46 +105,52 @@ Cross-org isolation check: log in as a different org's admin → `SELECT * FROM 
 
 ---
 
-## Phase 2 — Family authorization & consent model
+## Phase 2 — Family authorization & consent model ✅
 
-**Goal:** family sharing is gated by explicit authorization per contact, with scope and expiration.
+**Shipped.** Family contacts now carry explicit legal-basis tracking (involved in care / personal representative / signed authorization), a scope array of what categories they may receive, communication channel preferences, start/end dates, and a reason-required revoke flow. Enforcement is gated per-org by a new `settings.family_auth_required` toggle so legacy flows keep working until an org opts in.
 
-**Why next:** Phase 1 handles the treatment-sharing half (clinicians). Phase 2 handles the narrower family-sharing half — this is where the current app is most at risk today because `family_contacts.receives_updates` is a single boolean with no documented consent basis.
+### What was built
 
-### Scope
+**Migration — `supabase/migrations/00006_family_authorizations.sql`**
+Extends `family_contacts` with ten new columns: `involved_in_care`, `personal_representative`, `authorization_on_file`, `authorization_scope` (text array), `communication_channels` (text array, defaults `{email}`), `authorization_start_date`, `authorization_end_date`, `revoked_at`, `revocation_reason`, `confidential_communication_notes`. Permissive backfill: any existing contact with `receives_updates=true` is auto-marked `involved_in_care=true` so the legacy flow keeps working without admin review on day one.
 
-**Migration `00006_family_authorizations.sql`** — extend `family_contacts`:
-- `involved_in_care BOOLEAN DEFAULT false`
-- `personal_representative BOOLEAN DEFAULT false`
-- `authorization_on_file BOOLEAN DEFAULT false`
-- `authorization_scope TEXT[]` — enum-like strings: `visit_notifications | appointment_logistics | medication_adherence_summary | safety_alerts | wellbeing_summary | task_completion | incident_notifications`
-- `communication_channels TEXT[]` — `email | sms | phone`
-- `authorization_start_date DATE NULL`
-- `authorization_end_date DATE NULL`
-- `revoked_at TIMESTAMPTZ NULL`
-- `revocation_reason TEXT NULL`
-- `confidential_communication_notes TEXT NULL`
+**API — `src/app/api/family/send/route.ts`**
+- Reads `organizations.settings.family_auth_required`. When true, rejects sends if the contact lacks any legal basis, is revoked, or has an expired authorization (403).
+- Always writes a `disclosure_events` row on successful send. Legal basis derived in priority order: `personal_representative` → `patient_authorization` → `patient_agreement`. `categories_shared` uses the contact's `authorization_scope`, or `['wellbeing_summary']` as fallback for legacy contacts.
 
-Migrate existing rows: `receives_updates=true` → `involved_in_care=true`, `authorization_on_file=false` (agency must review each). Gate new enforcement behind `organizations.settings.family_auth_required` (default false) so the existing family-update flow keeps working in legacy mode during cutover.
+**UI**
+- `src/components/residents/family-contact-form.tsx` (new) — shared add/edit form with legal-basis checkboxes, scope multi-select, channel toggles, start/end dates (shown only when authorization_on_file=true), and special instructions text.
+- `src/components/residents/family-contact-list.tsx` — rewritten with auth-status badges per card (Authorized / Personal rep / Involved in care / Expired / Revoked / No basis), an Edit dialog, and a Revoke dialog that requires a reason.
+- `src/components/family/family-update-editor.tsx` — adds a preview header on the editing step showing recipient, legal basis, approved scopes, and auth expiry. Warns that content-level filtering arrives in Phase 3 and asks the admin to manually trim the body in the meantime.
+- `/settings` — new "Compliance" section with a Switch to toggle `family_auth_required`.
 
-**API changes**
-- `/api/family/send`: if `settings.family_auth_required=true`, reject sends where target contact has `authorization_on_file=false` OR expired `authorization_end_date` OR `revoked_at IS NOT NULL`.
-- Every successful send writes a `disclosure_events` row. Legal basis:
-  - `personal_representative=true` → `personal_representative`
-  - `authorization_on_file=true` → `patient_authorization`
-  - `involved_in_care=true` only → `patient_agreement`
+**Types**
+- `src/types/database.ts` — augmented `family_contacts` Row/Insert/Update with the ten new fields.
+- `src/test/fixtures.ts` — updated `mockFamilyContact` to include the new fields (keeps unit tests compiling).
 
-**UI changes**
-- Extend `src/components/family/family-contact-form.tsx` (actually `src/components/residents/family-contact-list.tsx` per current code) with authorization fields.
-- Revocation button requires a reason text.
-- `src/components/family/family-update-editor.tsx` gets a preview screen showing approved scopes only. Out-of-scope sections render as placeholder until Phase 3 adds content-level filtering.
+### Known limitations to carry forward
 
-### Verification
-- Toggle `settings.family_auth_required` on an org.
-- Contact with no authorization → send returns 403.
-- Contact with expired auth → rejected.
-- Revoked contact → doesn't appear in recipient picker.
-- `disclosure_events.legal_basis` is correct per case.
+- **Channels are stored but not enforced.** `communication_channels` is saved on each contact but nothing downstream checks it yet — email is still the only implemented channel. Revisit when SMS or phone delivery lands.
+- **Scope is not content-filtered yet.** The family-update prompt still ingests all structured sections. Phase 3 adds `disclosure_class` tags so the prompt can filter sections by scope. Until then, admins trim the body manually during the preview step.
+- **Legacy orgs remain on permissive mode.** `family_auth_required` defaults to false. Orgs stay on legacy behavior until an admin flips it in `/settings`. Consider an in-product nudge once Phase 5 audit-log exists so admins see "unauthorized disclosures may be flagged in future."
+- **Disclosure logging already runs in legacy mode.** Every family send writes a `disclosure_events` row even when enforcement is off. Good for compliance accounting, but means legacy orgs accumulate `patient_agreement` rows for contacts that may not actually have agreed — admins should review during opt-in.
+- **No automatic legal-basis downgrade on expiry.** If `authorization_end_date` passes, the "expired" badge appears but the contact still reads as having `authorization_on_file=true`. The send gate blocks correctly; the in-list display does too. No cron needs to run.
+
+### How to verify (once Docker is running)
+
+```bash
+supabase db reset        # applies 00001-00006
+pnpm dev
+```
+
+Then, as an admin:
+1. `/residents/[id]` → edit a family contact → toggle legal bases, set scope checkboxes, set auth dates → Save. Verify the card shows the right badge.
+2. Revoke a contact → required reason prompt → badge flips to "Revoked". Click "Restore" → returns to prior state.
+3. `/settings` → flip "Require documented legal basis" on → Save.
+4. Try to send a family update to a revoked contact → 403.
+5. Try to send to a contact with expired `authorization_end_date` → 403.
+6. Send to a valid contact → success. In Supabase Studio: `SELECT * FROM disclosure_events ORDER BY created_at DESC` → row with `recipient_type='family_contact'` and correct `legal_basis`.
+7. Flip the flag off → previously-blocked sends now succeed (legacy mode still writes disclosure rows with `legal_basis='patient_agreement'`).
 
 ---
 

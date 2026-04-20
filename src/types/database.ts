@@ -113,37 +113,67 @@ export type Database = {
       }
       family_contacts: {
         Row: {
+          authorization_end_date: string | null
+          authorization_on_file: boolean
+          authorization_scope: string[]
+          authorization_start_date: string | null
+          communication_channels: string[]
+          confidential_communication_notes: string | null
           created_at: string
           email: string | null
           id: string
+          involved_in_care: boolean
           is_primary: boolean
           name: string
+          personal_representative: boolean
           phone: string | null
           receives_updates: boolean
           relationship: string
           resident_id: string
+          revocation_reason: string | null
+          revoked_at: string | null
         }
         Insert: {
+          authorization_end_date?: string | null
+          authorization_on_file?: boolean
+          authorization_scope?: string[]
+          authorization_start_date?: string | null
+          communication_channels?: string[]
+          confidential_communication_notes?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          involved_in_care?: boolean
           is_primary?: boolean
           name: string
+          personal_representative?: boolean
           phone?: string | null
           receives_updates?: boolean
           relationship: string
           resident_id: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
         }
         Update: {
+          authorization_end_date?: string | null
+          authorization_on_file?: boolean
+          authorization_scope?: string[]
+          authorization_start_date?: string | null
+          communication_channels?: string[]
+          confidential_communication_notes?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          involved_in_care?: boolean
           is_primary?: boolean
           name?: string
+          personal_representative?: boolean
           phone?: string | null
           receives_updates?: boolean
           relationship?: string
           resident_id?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
         }
         Relationships: [
           {

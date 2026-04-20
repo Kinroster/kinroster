@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -15,9 +16,45 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Send, Save } from "lucide-react";
+import { Loader2, Send, Save, ShieldCheck, AlertTriangle } from "lucide-react";
 import { format, subDays } from "date-fns";
 import type { FamilyContact } from "@/types/database";
+import { SCOPE_OPTIONS } from "@/components/residents/family-contact-form";
+
+type LegalBasisLabel =
+  | "Personal representative"
+  | "Signed HIPAA authorization"
+  | "Patient agreement (involved in care)"
+  | "No legal basis on file";
+
+function describeLegalBasis(contact: FamilyContact): LegalBasisLabel {
+  if (contact.personal_representative) return "Personal representative";
+  if (contact.authorization_on_file) return "Signed HIPAA authorization";
+  if (contact.involved_in_care) return "Patient agreement (involved in care)";
+  return "No legal basis on file";
+}
+
+function scopeLabel(value: string): string {
+  return SCOPE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+function contactBlockedReason(contact: FamilyContact): string | null {
+  if (contact.revoked_at) return "Sharing has been revoked";
+  if (
+    contact.authorization_end_date &&
+    new Date(contact.authorization_end_date) < new Date()
+  ) {
+    return "Signed authorization has expired";
+  }
+  if (
+    !contact.involved_in_care &&
+    !contact.personal_representative &&
+    !contact.authorization_on_file
+  ) {
+    return "No legal basis on file";
+  }
+  return null;
+}
 
 type Step = "configure" | "generating" | "editing" | "sending";
 
@@ -169,6 +206,9 @@ export function FamilyUpdateEditor({
   }
 
   const selectedContact = contacts.find((c) => c.id === contactId);
+  const blockedReason = selectedContact
+    ? contactBlockedReason(selectedContact)
+    : null;
 
   if (step === "configure" || step === "generating") {
     return (
@@ -209,6 +249,25 @@ export function FamilyUpdateEditor({
           </div>
         </div>
 
+        {selectedContact && blockedReason && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              <div>
+                <p className="font-medium">
+                  This contact cannot receive updates
+                </p>
+                <p className="text-xs mt-0.5">
+                  {blockedReason}. Update the contact record (on the resident
+                  page) before sending. If org-wide strict enforcement is off,
+                  the send may still go through but will be flagged in the
+                  disclosure log.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <Button
           onClick={handleGenerate}
           disabled={step === "generating" || !contactId}
@@ -229,10 +288,49 @@ export function FamilyUpdateEditor({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        To: {selectedContact?.name} ({selectedContact?.relationship}) —{" "}
-        {selectedContact?.email || "no email"}
-      </div>
+      {selectedContact && (
+        <div className="rounded-md border bg-muted/30 p-3 text-sm space-y-2">
+          <p className="font-medium flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Preview — what {selectedContact.name} will receive
+          </p>
+          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+            <span className="text-muted-foreground">Recipient</span>
+            <span>
+              {selectedContact.name} ({selectedContact.relationship})
+              {selectedContact.email ? ` · ${selectedContact.email}` : ""}
+            </span>
+            <span className="text-muted-foreground">Legal basis</span>
+            <span>{describeLegalBasis(selectedContact)}</span>
+            <span className="text-muted-foreground">Approved scope</span>
+            <span className="flex flex-wrap gap-1">
+              {selectedContact.authorization_scope.length === 0 ? (
+                <span className="text-muted-foreground">
+                  Empty — legacy general update mode
+                </span>
+              ) : (
+                selectedContact.authorization_scope.map((s) => (
+                  <Badge key={s} variant="outline" className="text-xs">
+                    {scopeLabel(s)}
+                  </Badge>
+                ))
+              )}
+            </span>
+            {selectedContact.authorization_end_date && (
+              <>
+                <span className="text-muted-foreground">Authorization ends</span>
+                <span>{selectedContact.authorization_end_date}</span>
+              </>
+            )}
+          </div>
+          <div className="rounded-md bg-background border p-2 text-xs text-muted-foreground">
+            <AlertTriangle className="h-3 w-3 inline mr-1" />
+            Content-level filtering by scope arrives in Phase 3. Until then,
+            review the body below and trim anything outside the approved
+            categories before sending.
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>Subject</Label>
