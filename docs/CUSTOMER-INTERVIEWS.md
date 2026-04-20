@@ -1,4 +1,4 @@
-# Customer Interview Kit — CareNote Business Validation
+# Customer Interview Kit — Kinroster Business Validation
 
 ## Purpose
 
@@ -8,7 +8,7 @@ Desktop research (the five Perplexity prompts in April 2026) validated the marke
 
 1. Will a CA RCFE owner actually pay $299/mo for a voice-first + state-forms + family-portal SaaS? (Compare to $300 for ALIS or $400 for ECP.)
 2. What is August Health's current CA penetration? (If 30%+ of 6-20 bed CA homes, the lane is closing. If <5%, we still have time.)
-3. Which state compliance documents (LIC 611, LIC 624, LIC 9040, PMS forms) are operators paying someone else to prepare that CareNote could automate?
+3. Which state compliance documents (LIC 611, LIC 624, LIC 9040, PMS forms) are operators paying someone else to prepare that Kinroster could automate?
 4. What's the net-new wedge they'd pay for vs. their current EHR? Voice? Family portal? Incident reports? State-form automation?
 
 ## Target
@@ -57,7 +57,7 @@ Subject: 30 min — founder input on documentation tool for small RCFEs
 
 Hi [First Name],
 
-I'm [Your Name], one of the founders of CareNote. We're pre-launch,
+I'm [Your Name], one of the founders of Kinroster. We're pre-launch,
 building a documentation tool specifically for 6-20 bed RCFEs — not
 the 60-bed-community system that PointClickCare and MatrixCare are
 sized for, and not the physician-focused AI scribes like Nuance DAX.
@@ -94,7 +94,7 @@ Thanks,
 ### LinkedIn DM
 
 ```
-Hi [First Name] — I'm one of the founders of CareNote, pre-launch,
+Hi [First Name] — I'm one of the founders of Kinroster, pre-launch,
 building documentation software for 6-20 bed RCFEs. Would you be open
 to a 30-min call to tell me what's broken about documentation at your
 facility? No pitch — just research. In exchange I'll give you free
@@ -154,7 +154,7 @@ The goal is to learn, not to pitch. Do not show the product unless they explicit
 
 ### Opening (5 min)
 
-1. **Intro.** "Thanks for making time. I'm [Name], founder of CareNote. We're building documentation software for 6-20 bed RCFEs. This call is research, not a sales pitch — the product won't even come up unless you ask. I'll take notes. Do I have your permission to record this for my own reference? Your answers stay anonymous in any sharing."
+1. **Intro.** "Thanks for making time. I'm [Name], founder of Kinroster. We're building documentation software for 6-20 bed RCFEs. This call is research, not a sales pitch — the product won't even come up unless you ask. I'll take notes. Do I have your permission to record this for my own reference? Your answers stay anonymous in any sharing."
 2. **Their context.** "Tell me about your facility — how many beds, how long have you been running, ownership structure."
 
 ### Documentation workflow today (10 min)
@@ -304,7 +304,7 @@ Submit a "request a demo" form to each as a fictional 10-bed RCFE in Los Angeles
 - How aggressive their sales follow-up is
 - What their positioning language sounds like
 
-Use a non-personal email (carenote-research@[something] rather than your real name) and politely decline if pressed for a call. Ethically grey — some people find it sketchy — so use judgment.
+Use a non-personal email (kinroster-research@[something] rather than your real name) and politely decline if pressed for a call. Ethically grey — some people find it sketchy — so use judgment.
 
 ### 5. Build in public on LinkedIn + Twitter (ongoing, $0)
 
