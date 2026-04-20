@@ -112,6 +112,8 @@ export const mockNote: Note = {
   shift: "morning",
   flagged_as_incident: false,
   manually_flagged: false,
+  sensitive_flag: false,
+  sensitive_category: null,
   metadata: {
     categories: ["mood", "nutrition", "mobility"],
     flags: [],

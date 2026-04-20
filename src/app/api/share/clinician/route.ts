@@ -3,6 +3,11 @@ import crypto from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { callClaude, parseJsonResponse } from "@/lib/claude";
 import type { Json } from "@/types/database";
+import {
+  parseStructuredOutput,
+  filterSectionsForClinician,
+  serializeSectionsForPrompt,
+} from "@/lib/structured-output";
 import { checkQuotaAndIncrement } from "@/lib/quota";
 import { sendClinicianPortalLink } from "@/lib/resend";
 import {
@@ -202,6 +207,34 @@ export async function POST(request: NextRequest) {
     ? notes[notes.length - 1].created_at.slice(0, 10)
     : dateRangeEnd!;
 
+  // Phase 3: drop billing_ops_only and sensitive_restricted sections before
+  // the summary is generated. Sensitive-restricted unlock for clinicians is
+  // Phase 4 and will require an explicit admin action + audit row.
+  const filteredNotes = notes
+    .map((n) => {
+      const parsed = parseStructuredOutput(n.structured_output);
+      if (!parsed) return null;
+      const allowed = filterSectionsForClinician(parsed.sections);
+      if (allowed.length === 0) return null;
+      return {
+        id: n.id,
+        created_at: n.created_at,
+        author_id: n.author_id,
+        structured_output: serializeSectionsForPrompt(allowed, parsed.follow_up),
+      };
+    })
+    .filter((n): n is NonNullable<typeof n> => n !== null);
+
+  if (filteredNotes.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "No clinician-appropriate content in this scope. All sections were billing-only or sensitive-restricted.",
+      },
+      { status: 400 }
+    );
+  }
+
   // Claude: generate clinician summary
   let summary: ClinicianSummaryOutput;
   try {
@@ -218,7 +251,7 @@ export async function POST(request: NextRequest) {
         dateRangeEnd: effectiveEnd,
         conditions: typedResident.conditions,
         careNotesContext: typedResident.care_notes_context,
-        notes: notes.map((n) => ({
+        notes: filteredNotes.map((n) => ({
           created_at: n.created_at,
           author_name: authorMap.get(n.author_id) || "Staff",
           structured_output: n.structured_output,
@@ -292,7 +325,7 @@ export async function POST(request: NextRequest) {
       ...(summary.medication_adherence ? ["medication_adherence"] : []),
       ...(summary.cognitive_changes ? ["cognitive_changes"] : []),
     ],
-    source_note_ids: notes.map((n) => n.id),
+    source_note_ids: filteredNotes.map((n) => n.id),
     delivery_method: "magic_link_portal",
     share_link_id: typedShareRow.id,
   });

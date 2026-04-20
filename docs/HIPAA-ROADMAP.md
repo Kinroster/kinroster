@@ -14,7 +14,7 @@ The legal analysis behind this roadmap still needs review by qualified healthcar
 |-------|-------|--------|--------------|-----------------------|
 | 1 | Clinician directory + secure sharing | **Shipped** (commit d907d25) | — | Not blocking but highest value |
 | 2 | Family authorization & consent | **Shipped** (commit d4b61e7) | — | Yes |
-| 3 | Disclosure classification tags | Planned | 3-4 days | Yes |
+| 3 | Disclosure classification tags | **Shipped** (commit TBD) | — | Yes |
 | 4 | Sensitive-data segmentation (42 CFR Part 2) | Planned | 2-3 days | Yes |
 | 5 | Audit events | Planned | 3-4 days | Yes |
 | 6 | Role expansion & minimum-necessary | Planned | 3-5 days | No |
@@ -154,51 +154,69 @@ Then, as an admin:
 
 ---
 
-## Phase 3 — Disclosure classification tags on note segments
+## Phase 3 — Disclosure classification tags on note segments ✅
 
-**Goal:** every section of a structured note carries a `disclosure_class` so share flows can filter deterministically instead of relying on Claude to re-judge per audience.
+**Shipped.** Structured notes now carry a per-section `disclosure_class` (who may see it) and a `scope_category` (what topic it covers). Family and clinician share flows filter on these tags deterministically — no more asking Claude to re-judge per audience. Sensitive content (substance use, psychotherapy) is marked at both the section level and on the notes row.
 
-### Scope
+### Design calls that deviate from the original plan
 
-**Prompt change** — `src/lib/prompts/shift-note.ts` emits per-section classification:
-```ts
-{
-  summary: string,
-  sections: Array<{
-    name: string,
-    text: string,
-    disclosure_class:
-      | "care_team_only"
-      | "family_shareable_by_authorization"
-      | "family_shareable_by_involvement"
-      | "billing_ops_only"
-      | "sensitive_restricted"
-  }>,
-  follow_up: string,
-  flags: Array<{type, reason}>,
-  sensitive_flag: boolean,
-  sensitive_category: string | null   // "substance_use_42cfr_part2" | "psychotherapy_notes" | ...
-}
+The original plan gated the v1→v2 output shape behind an `organizations.settings.structured_output_version` flag. I dropped that flag. There's no scenario where an org would want to opt out of v2, and the v1/v2 branching added complexity without benefit. Instead, a single `parseStructuredOutput()` util normalizes both shapes at read time — v1 sections are treated as `family_shareable_by_involvement` with no scope_category (the permissive default), so old notes keep rendering and keep being share-eligible, just without topic-level filtering until they're re-structured. New notes are always v2.
+
+A second call: the roadmap originally conflated `disclosure_class` and `authorization_scope` as the same axis. They're orthogonal — class = WHO (care team / family / billing / sensitive), scope = WHAT TOPIC (medications, safety, wellbeing, etc.). Phase 3 emits both per section; family filtering requires both gates to pass.
+
+### What was built
+
+**Prompt — `src/lib/prompts/shift-note.ts`**
+Output shape is now `sections: Array<{ name, text, disclosure_class, scope_category }>` plus top-level `sensitive_flag` + `sensitive_category`. Classification rules live in the system prompt:
+- Default class is `family_shareable_by_involvement`.
+- Clinical detail (detailed medication issues, behavior analysis) → `care_team_only`.
+- More substantive family-relevant detail that needs a signed auth → `family_shareable_by_authorization`.
+- Substance use mentions → `sensitive_restricted` + `sensitive_category: "substance_use_42cfr_part2"`.
+- Psychotherapy → `sensitive_restricted` + `sensitive_category: "psychotherapy_notes"`.
+- scope_category is deterministic: Safety → `safety_alerts`; Medication Compliance → `medication_adherence_summary`; Mood/Sleep/Nutrition/etc. → `wellbeing_summary`; Family Communication → `visit_notifications`; task-focused statements → `task_completion`.
+
+Exported types: `DisclosureClass`, `ScopeCategory`, `SensitiveCategory`, `StructuredNoteSection`, `StructuredNoteOutput`, and a legacy `StructuredNoteOutputV1`.
+
+**Migration — `supabase/migrations/00007_note_sensitive_flags.sql`**
+Adds `notes.sensitive_flag BOOLEAN DEFAULT false` + `notes.sensitive_category TEXT`. Partial index on `(organization_id, resident_id) WHERE sensitive_flag = true` to keep Phase 4's sensitive-access RLS fast. Types augmented in `src/types/database.ts`.
+
+**Shared util — `src/lib/structured-output.ts`**
+Central parser + filter layer so every consumer sees v2 uniformly:
+- `parseStructuredOutput(raw)` — parses JSON, returns a v2-shape object. v1 rows normalize with permissive defaults.
+- `filterSectionsForClinician(sections)` — drops `billing_ops_only` and `sensitive_restricted`.
+- `filterSectionsForFamily(sections, auth)` — drops sensitive, enforces class based on contact's legal basis (`involved_in_care` → baseline only; `authorization_on_file` or `personal_representative` → both family classes), then requires `scope_category ∈ authorization_scope` unless scope is empty (legacy mode).
+- `serializeSectionsForPrompt(sections, followUp)` — renders filtered sections back to plain text for the existing summarizer prompts, which stayed unchanged.
+
+**API changes**
+- `/api/claude/structure` now persists `sensitive_flag` + `sensitive_category` columns alongside the v2 JSON, and stamps `structured_output_version: "v2"` into metadata.
+- `/api/claude/family-update` reads the contact's authorization fields, filters each source note through `filterSectionsForFamily`, and returns 400 if no note has any shareable content left. Source note ids returned reflect the filtered set.
+- `/api/share/clinician` filters each source note through `filterSectionsForClinician` before the summary prompt. `disclosure_events.source_note_ids` reflects the filtered set.
+
+**UI — `src/components/notes/note-timeline.tsx`**
+Each section renders with a compact class badge next to its name (Care team / Family (involved) / Family (auth) / Ops / Sensitive). Cards for sensitive notes get an amber border + a ShieldAlert icon and a "Sensitive — restricted from routine sharing" subtitle. v1 notes render the same but without badges (no class data available). Uses the shared `parseStructuredOutput`.
+
+**Test fixture** — `mockNote` in `src/test/fixtures.ts` updated with the two new columns.
+
+### Known limitations to carry forward
+
+- **No automatic unlock path for sensitive content.** Clinician shares silently drop sensitive sections even when the clinician legitimately needs them. Phase 4 adds the explicit-unlock UX and writes an audit row when a sensitive section is released.
+- **v1 notes keep unfiltered scope behavior.** Old notes normalize with `scope_category: null`, and the family filter rejects null scopes UNLESS the contact's `authorization_scope` is empty (legacy mode). Enabling `family_auth_required` and setting a contact's scope means old v1 notes stop being shareable with that contact. Mitigation: leave scope empty for legacy contacts, or re-structure old notes.
+- **Scope mapping is Claude-judged, not rule-enforced.** Claude picks `scope_category` based on the system prompt; there's no post-hoc validator. Phase 5's audit log will surface anomalies; a deterministic post-pass validator is a candidate for a later phase if Claude drift becomes a problem.
+- **`categories_shared` in disclosure events is coarse.** Clinician disclosures populate it with `["key_observations", ...]` from the summary; family disclosures use the contact's full `authorization_scope`. Neither reflects the actual filtered section names. Tighten during Phase 5.
+- **Re-structuring old notes is manual.** No "v1 → v2 upgrade" batch job. If an org wants historical ranges to carry class/scope tags, admin has to re-trigger structuring per note. Candidate for a future cron.
+
+### How to verify
+
+```bash
+supabase db reset        # applies 00001-00007
+pnpm dev
 ```
 
-This is a **breaking shape change** — current shape is `sections: Record<string, string>`. Migration strategy: `organizations.settings.structured_output_version: 'v1' | 'v2'`. Structurer writes whichever shape the org is on; the timeline renderer handles both via type guard. Flip default after all orgs migrate.
-
-**Migration `00007_structured_output_tags.sql`** adds `notes.sensitive_flag BOOLEAN DEFAULT false` and `notes.sensitive_category TEXT NULL`. Re-extract from Claude response in `src/app/api/claude/structure/route.ts`.
-
-**Share flow changes**
-- Clinician share: include everything except `billing_ops_only`. Require admin unlock for `sensitive_restricted` (writes an audit event).
-- Family update: only include sections where `disclosure_class` maps to a class in the contact's `authorization_scope`.
-- Timeline UI: render a colored badge per section indicating its class.
-
-### Verification
-- Fall note → "Safety" section tagged `care_team_only`.
-- Alcohol mention → `sensitive_flag=true`, category `substance_use_42cfr_part2`.
-- Clinician share excludes billing sections unless explicitly unlocked.
-- Family update only shows sections mapped to the contact's scope.
-
-### Depends on
-- Phase 1 (clinician share filter logic updates)
-- Phase 2 (scope-based filtering for family)
+1. Create a note with a fall event → structured_output has a Safety section with `scope_category: "safety_alerts"`. Timeline shows the class badge.
+2. Create a note mentioning alcohol → the note row has `sensitive_flag=true`, `sensitive_category='substance_use_42cfr_part2'`. Timeline card gets an amber border + ShieldAlert.
+3. Set a family contact's `authorization_scope` to `['wellbeing_summary']`. Try to send a family update covering a fall note → the Safety section filters out; if all sections filter out, send returns 400.
+4. Flip `family_auth_required` off → legacy general-update mode returns; scope no longer filters, but sensitive still blocks.
+5. Share with a clinician → sensitive sections are silently omitted. `disclosure_events.source_note_ids` reflects the filtered set.
 
 ---
 

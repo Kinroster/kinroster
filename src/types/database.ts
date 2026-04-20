@@ -287,6 +287,8 @@ export type Database = {
           organization_id: string
           raw_input: string
           resident_id: string
+          sensitive_category: string | null
+          sensitive_flag: boolean
           shift: string | null
           structured_output: string | null
           structuring_error: string | null
@@ -307,6 +309,8 @@ export type Database = {
           organization_id: string
           raw_input: string
           resident_id: string
+          sensitive_category?: string | null
+          sensitive_flag?: boolean
           shift?: string | null
           structured_output?: string | null
           structuring_error?: string | null
@@ -327,6 +331,8 @@ export type Database = {
           organization_id?: string
           raw_input?: string
           resident_id?: string
+          sensitive_category?: string | null
+          sensitive_flag?: boolean
           shift?: string | null
           structured_output?: string | null
           structuring_error?: string | null

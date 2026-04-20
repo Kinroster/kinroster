@@ -6,6 +6,11 @@ import {
   buildFamilyUpdateUserPrompt,
   type FamilyUpdateOutput,
 } from "@/lib/prompts/family-update";
+import {
+  parseStructuredOutput,
+  filterSectionsForFamily,
+  serializeSectionsForPrompt,
+} from "@/lib/structured-output";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -51,10 +56,12 @@ export async function POST(request: NextRequest) {
     .eq("id", typedResident.organization_id)
     .single();
 
-  // Fetch contact
+  // Fetch contact with the authorization fields needed for Phase 3 filtering.
   const { data: contact } = await supabase
     .from("family_contacts")
-    .select("name, relationship")
+    .select(
+      "name, relationship, involved_in_care, personal_representative, authorization_on_file, authorization_scope"
+    )
     .eq("id", contactId)
     .single();
 
@@ -62,13 +69,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Contact not found" }, { status: 404 });
   }
 
-  const typedContact = contact as { name: string; relationship: string };
+  const typedContact = contact as {
+    name: string;
+    relationship: string;
+    involved_in_care: boolean;
+    personal_representative: boolean;
+    authorization_on_file: boolean;
+    authorization_scope: string[];
+  };
   const typedOrg = org as { name: string } | null;
 
   // Fetch notes in date range
   const { data: notesData } = await supabase
     .from("notes")
-    .select("created_at, structured_output, author_id")
+    .select("id, created_at, structured_output, author_id")
     .eq("resident_id", residentId)
     .eq("is_structured", true)
     .gte("created_at", dateRangeStart)
@@ -76,6 +90,7 @@ export async function POST(request: NextRequest) {
     .order("created_at", { ascending: true });
 
   const notes = (notesData ?? []) as Array<{
+    id: string;
     created_at: string;
     structured_output: string;
     author_id: string;
@@ -102,6 +117,39 @@ export async function POST(request: NextRequest) {
     ])
   );
 
+  // Phase 3: filter each note's sections by the contact's legal basis and
+  // authorization scope. Sections classed as care_team_only, billing_ops_only,
+  // or sensitive_restricted never reach family-facing prompts.
+  const filteredNotes = notes
+    .map((n) => {
+      const parsed = parseStructuredOutput(n.structured_output);
+      if (!parsed) return null;
+      const allowed = filterSectionsForFamily(parsed.sections, {
+        involved_in_care: typedContact.involved_in_care,
+        personal_representative: typedContact.personal_representative,
+        authorization_on_file: typedContact.authorization_on_file,
+        authorization_scope: typedContact.authorization_scope,
+      });
+      if (allowed.length === 0) return null;
+      return {
+        id: n.id,
+        created_at: n.created_at,
+        author_id: n.author_id,
+        structured_output: serializeSectionsForPrompt(allowed, parsed.follow_up),
+      };
+    })
+    .filter((n): n is NonNullable<typeof n> => n !== null);
+
+  if (filteredNotes.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "No shareable content in this date range for this contact. Review the contact's authorization scope and legal basis.",
+      },
+      { status: 400 }
+    );
+  }
+
   try {
     const raw = await callClaude({
       systemPrompt: FAMILY_UPDATE_SYSTEM_PROMPT,
@@ -113,7 +161,7 @@ export async function POST(request: NextRequest) {
         relationship: typedContact.relationship,
         dateRangeStart,
         dateRangeEnd,
-        notes: notes.map((n) => ({
+        notes: filteredNotes.map((n) => ({
           created_at: n.created_at,
           author_name: authorMap.get(n.author_id) || "Staff",
           structured_output: n.structured_output,
@@ -127,7 +175,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       subject: update.subject,
       body: update.body,
-      sourceNoteIds: notes.map((n) => (n as unknown as { id: string }).id),
+      sourceNoteIds: filteredNotes.map((n) => n.id),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";

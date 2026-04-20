@@ -91,16 +91,23 @@ export async function POST(request: NextRequest) {
     const hasFlags = structured.flags && structured.flags.length > 0;
     const aiClassification = hasFlags ? "possible_incident" : "routine";
 
+    const sections = Array.isArray(structured.sections)
+      ? structured.sections
+      : [];
+
     // Build metadata
     const metadata = {
-      categories: Object.keys(structured.sections || {}),
+      categories: sections.map((s) => s.name),
       flags: structured.flags || [],
       ai_classification: aiClassification,
       model_used: "claude-sonnet-4-6",
       tokens_used: { input: 0, output: 0 }, // Anthropic SDK doesn't expose this easily in v1
+      structured_output_version: "v2",
     };
 
-    // Update note with structured output
+    // Update note with structured output. sensitive_flag + sensitive_category
+    // are promoted to columns so Phase 4 RLS can key off them without
+    // parsing JSON, and so sensitive notes can be indexed.
     await supabase
       .from("notes")
       .update({
@@ -109,6 +116,8 @@ export async function POST(request: NextRequest) {
         structuring_error: null,
         metadata,
         flagged_as_incident: hasFlags,
+        sensitive_flag: structured.sensitive_flag === true,
+        sensitive_category: structured.sensitive_category ?? null,
       })
       .eq("id", noteId);
 
