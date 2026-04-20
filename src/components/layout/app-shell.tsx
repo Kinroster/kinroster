@@ -12,6 +12,7 @@ import {
   CreditCard,
   LogOut,
   Mic,
+  Stethoscope,
 } from "lucide-react";
 import {
   Sheet,
@@ -89,6 +90,13 @@ export function AppShell({
                     >
                       <UserPlus className="h-4 w-4" />
                       Team
+                    </Link>
+                    <Link
+                      href="/clinicians"
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                    >
+                      <Stethoscope className="h-4 w-4" />
+                      Clinicians
                     </Link>
                     <Link
                       href="/settings"
