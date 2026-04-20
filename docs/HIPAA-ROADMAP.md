@@ -17,7 +17,7 @@ The legal analysis behind this roadmap still needs review by qualified healthcar
 | 3 | Disclosure classification tags | **Shipped** (commit 14f654c) | — | Yes |
 | 4 | Sensitive-data segmentation (42 CFR Part 2) | **Shipped** (commit 3b50726) | — | Yes |
 | 5 | Audit events | **Shipped** (commit 77a2acc) | — | Yes |
-| 6 | Role expansion & minimum-necessary | **Shipped** (commit TBD) | — | No |
+| 6 | Role expansion & minimum-necessary | **Shipped** (commit 31d1cab) | — | No |
 | 7 | Session controls & rate limiting | Planned | 2-3 days | Yes |
 | 8 | Data subject rights (export + deletion) | Planned | 3-4 days | Yes |
 | 9 | Voice & transcript retention | Planned | 1-2 days | No |
