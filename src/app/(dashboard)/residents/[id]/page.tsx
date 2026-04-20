@@ -10,6 +10,11 @@ import { NoteTimeline } from "@/components/notes/note-timeline";
 import { NoteInputForm } from "@/components/notes/note-input-form";
 import { VoiceCallButton } from "@/components/notes/voice-call-button";
 import { FamilyContactList } from "@/components/residents/family-contact-list";
+import {
+  ResidentClinicianList,
+  type AssignedClinician,
+  type DirectoryClinician,
+} from "@/components/clinicians/resident-clinician-list";
 import type { Resident, FamilyContact } from "@/types/database";
 
 export default async function ResidentDetailPage({
@@ -52,6 +57,46 @@ export default async function ResidentDetailPage({
 
   const familyContacts = (contactsData ?? []) as FamilyContact[];
   const isAdmin = user.role === "admin";
+
+  const { data: assignedData } = await supabase
+    .from("resident_clinicians")
+    .select(
+      "id, clinician_id, relationship, is_primary, clinicians(full_name, email, specialty)"
+    )
+    .eq("resident_id", id);
+
+  const assignedClinicians: AssignedClinician[] = (
+    (assignedData ?? []) as Array<{
+      id: string;
+      clinician_id: string;
+      relationship: string;
+      is_primary: boolean;
+      clinicians: {
+        full_name: string;
+        email: string;
+        specialty: string | null;
+      } | null;
+    }>
+  )
+    .filter((row) => row.clinicians !== null)
+    .map((row) => ({
+      assignment_id: row.id,
+      clinician_id: row.clinician_id,
+      full_name: row.clinicians!.full_name,
+      email: row.clinicians!.email,
+      specialty: row.clinicians!.specialty,
+      relationship: row.relationship,
+      is_primary: row.is_primary,
+    }));
+
+  const { data: directoryData } = await supabase
+    .from("clinicians")
+    .select("id, full_name, email, specialty")
+    .eq("organization_id", user.organization_id)
+    .eq("is_active", true)
+    .order("full_name");
+
+  const clinicianDirectory = (directoryData ?? []) as DirectoryClinician[];
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-5">
@@ -112,6 +157,14 @@ export default async function ResidentDetailPage({
       <FamilyContactList
         contacts={familyContacts}
         residentId={id}
+        isAdmin={isAdmin}
+      />
+
+      {/* Treating clinicians */}
+      <ResidentClinicianList
+        residentId={id}
+        assigned={assignedClinicians}
+        directory={clinicianDirectory}
         isAdmin={isAdmin}
       />
 

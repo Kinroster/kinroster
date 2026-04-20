@@ -113,37 +113,67 @@ export type Database = {
       }
       family_contacts: {
         Row: {
+          authorization_end_date: string | null
+          authorization_on_file: boolean
+          authorization_scope: string[]
+          authorization_start_date: string | null
+          communication_channels: string[]
+          confidential_communication_notes: string | null
           created_at: string
           email: string | null
           id: string
+          involved_in_care: boolean
           is_primary: boolean
           name: string
+          personal_representative: boolean
           phone: string | null
           receives_updates: boolean
           relationship: string
           resident_id: string
+          revocation_reason: string | null
+          revoked_at: string | null
         }
         Insert: {
+          authorization_end_date?: string | null
+          authorization_on_file?: boolean
+          authorization_scope?: string[]
+          authorization_start_date?: string | null
+          communication_channels?: string[]
+          confidential_communication_notes?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          involved_in_care?: boolean
           is_primary?: boolean
           name: string
+          personal_representative?: boolean
           phone?: string | null
           receives_updates?: boolean
           relationship: string
           resident_id: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
         }
         Update: {
+          authorization_end_date?: string | null
+          authorization_on_file?: boolean
+          authorization_scope?: string[]
+          authorization_start_date?: string | null
+          communication_channels?: string[]
+          confidential_communication_notes?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          involved_in_care?: boolean
           is_primary?: boolean
           name?: string
+          personal_representative?: boolean
           phone?: string | null
           receives_updates?: boolean
           relationship?: string
           resident_id?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
         }
         Relationships: [
           {
@@ -257,6 +287,8 @@ export type Database = {
           organization_id: string
           raw_input: string
           resident_id: string
+          sensitive_category: string | null
+          sensitive_flag: boolean
           shift: string | null
           structured_output: string | null
           structuring_error: string | null
@@ -277,6 +309,8 @@ export type Database = {
           organization_id: string
           raw_input: string
           resident_id: string
+          sensitive_category?: string | null
+          sensitive_flag?: boolean
           shift?: string | null
           structured_output?: string | null
           structuring_error?: string | null
@@ -297,6 +331,8 @@ export type Database = {
           organization_id?: string
           raw_input?: string
           resident_id?: string
+          sensitive_category?: string | null
+          sensitive_flag?: boolean
           shift?: string | null
           structured_output?: string | null
           structuring_error?: string | null
@@ -667,6 +703,252 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinicians: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          npi: string | null
+          organization_id: string
+          phone: string | null
+          specialty: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          npi?: string | null
+          organization_id: string
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          npi?: string | null
+          organization_id?: string
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinicians_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resident_clinicians: {
+        Row: {
+          clinician_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          relationship: string
+          resident_id: string
+        }
+        Insert: {
+          clinician_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          relationship?: string
+          resident_id: string
+        }
+        Update: {
+          clinician_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          relationship?: string
+          resident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_clinicians_clinician_id_fkey"
+            columns: ["clinician_id"]
+            isOneToOne: false
+            referencedRelation: "clinicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_clinicians_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinician_share_links: {
+        Row: {
+          clinician_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          first_opened_at: string | null
+          id: string
+          last_opened_at: string | null
+          open_count: number
+          organization_id: string
+          rendered_summary: Json
+          resident_id: string
+          revoked_at: string | null
+          share_scope: Json
+          token_hash: string
+        }
+        Insert: {
+          clinician_id: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          first_opened_at?: string | null
+          id?: string
+          last_opened_at?: string | null
+          open_count?: number
+          organization_id: string
+          rendered_summary: Json
+          resident_id: string
+          revoked_at?: string | null
+          share_scope?: Json
+          token_hash: string
+        }
+        Update: {
+          clinician_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          first_opened_at?: string | null
+          id?: string
+          last_opened_at?: string | null
+          open_count?: number
+          organization_id?: string
+          rendered_summary?: Json
+          resident_id?: string
+          revoked_at?: string | null
+          share_scope?: Json
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinician_share_links_clinician_id_fkey"
+            columns: ["clinician_id"]
+            isOneToOne: false
+            referencedRelation: "clinicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinician_share_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinician_share_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinician_share_links_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disclosure_events: {
+        Row: {
+          actor_user_id: string
+          categories_shared: string[]
+          created_at: string
+          delivery_method: string
+          id: string
+          legal_basis: string
+          organization_id: string
+          recipient_id: string | null
+          recipient_type: string
+          resident_id: string
+          share_link_id: string | null
+          source_note_ids: string[]
+        }
+        Insert: {
+          actor_user_id: string
+          categories_shared?: string[]
+          created_at?: string
+          delivery_method: string
+          id?: string
+          legal_basis: string
+          organization_id: string
+          recipient_id?: string | null
+          recipient_type: string
+          resident_id: string
+          share_link_id?: string | null
+          source_note_ids?: string[]
+        }
+        Update: {
+          actor_user_id?: string
+          categories_shared?: string[]
+          created_at?: string
+          delivery_method?: string
+          id?: string
+          legal_basis?: string
+          organization_id?: string
+          recipient_id?: string | null
+          recipient_type?: string
+          resident_id?: string
+          share_link_id?: string | null
+          source_note_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disclosure_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disclosure_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disclosure_events_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disclosure_events_share_link_id_fkey"
+            columns: ["share_link_id"]
+            isOneToOne: false
+            referencedRelation: "clinician_share_links"
             referencedColumns: ["id"]
           },
         ]

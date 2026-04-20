@@ -71,6 +71,16 @@ export const mockFamilyContact: FamilyContact = {
   phone: "(555) 123-4567",
   is_primary: true,
   receives_updates: true,
+  involved_in_care: true,
+  personal_representative: false,
+  authorization_on_file: false,
+  authorization_scope: [],
+  communication_channels: ["email"],
+  authorization_start_date: null,
+  authorization_end_date: null,
+  revoked_at: null,
+  revocation_reason: null,
+  confidential_communication_notes: null,
   created_at: "2026-01-10T00:00:00Z",
 };
 
@@ -102,6 +112,8 @@ export const mockNote: Note = {
   shift: "morning",
   flagged_as_incident: false,
   manually_flagged: false,
+  sensitive_flag: false,
+  sensitive_category: null,
   metadata: {
     categories: ["mood", "nutrition", "mobility"],
     flags: [],

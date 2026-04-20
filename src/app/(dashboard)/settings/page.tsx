@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -20,6 +22,8 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("America/Los_Angeles");
   const [emailFromName, setEmailFromName] = useState("");
   const [emailReplyTo, setEmailReplyTo] = useState("");
+  const [familyAuthRequired, setFamilyAuthRequired] = useState(false);
+  const [settingsJson, setSettingsJson] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -55,11 +59,15 @@ export default function SettingsPage() {
           timezone: string;
           email_from_name: string | null;
           email_reply_to: string | null;
+          settings: Record<string, unknown> | null;
         };
         setName(o.name);
         setTimezone(o.timezone || "America/Los_Angeles");
         setEmailFromName(o.email_from_name || "");
         setEmailReplyTo(o.email_reply_to || "");
+        const current = o.settings ?? {};
+        setSettingsJson(current);
+        setFamilyAuthRequired(current.family_auth_required === true);
       }
       setLoading(false);
     }
@@ -79,6 +87,11 @@ export default function SettingsPage() {
       .eq("id", user!.id)
       .single();
 
+    const mergedSettings = {
+      ...settingsJson,
+      family_auth_required: familyAuthRequired,
+    };
+
     const { error } = await supabase
       .from("organizations")
       .update({
@@ -86,12 +99,14 @@ export default function SettingsPage() {
         timezone,
         email_from_name: emailFromName || null,
         email_reply_to: emailReplyTo || null,
+        settings: mergedSettings,
       })
       .eq("id", (appUser as { organization_id: string }).organization_id);
 
     if (error) {
       toast.error("Failed to save settings");
     } else {
+      setSettingsJson(mergedSettings);
       toast.success("Settings saved");
       router.refresh();
     }
@@ -161,6 +176,40 @@ export default function SettingsPage() {
             onChange={(e) => setEmailReplyTo(e.target.value)}
             placeholder="care@youfacility.com"
           />
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium">Compliance</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Stricter enforcement of HIPAA-aligned sharing rules.
+            </p>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-md border p-3">
+            <Switch
+              id="family-auth-required"
+              checked={familyAuthRequired}
+              onCheckedChange={setFamilyAuthRequired}
+            />
+            <div className="flex-1">
+              <Label
+                htmlFor="family-auth-required"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Require documented legal basis for family updates
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                When on, family updates can only be sent to contacts with at
+                least one legal basis on file (involved in care, personal
+                representative, or signed authorization) and a non-expired
+                authorization. Off by default to keep legacy flows working
+                during migration.
+              </p>
+            </div>
+          </div>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
