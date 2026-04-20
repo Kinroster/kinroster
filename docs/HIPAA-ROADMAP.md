@@ -13,7 +13,7 @@ The legal analysis behind this roadmap still needs review by qualified healthcar
 | Phase | Scope | Status | Dev estimate | Blocking for prod PHI? |
 |-------|-------|--------|--------------|-----------------------|
 | 1 | Clinician directory + secure sharing | **Shipped** (commit d907d25) | — | Not blocking but highest value |
-| 2 | Family authorization & consent | **Shipped** (commit TBD) | — | Yes |
+| 2 | Family authorization & consent | **Shipped** (commit d4b61e7) | — | Yes |
 | 3 | Disclosure classification tags | Planned | 3-4 days | Yes |
 | 4 | Sensitive-data segmentation (42 CFR Part 2) | Planned | 2-3 days | Yes |
 | 5 | Audit events | Planned | 3-4 days | Yes |
