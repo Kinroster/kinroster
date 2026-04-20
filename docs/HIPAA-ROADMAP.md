@@ -20,7 +20,7 @@ The legal analysis behind this roadmap still needs review by qualified healthcar
 | 6 | Role expansion & minimum-necessary | **Shipped** (commit 31d1cab) | — | No |
 | 7 | Session controls & rate limiting | **Shipped** (commit 3c152c9) | — | Yes |
 | 8 | Data subject rights (export + deletion) | **Shipped** (commit eb0664d) | — | Yes |
-| 9 | Voice & transcript retention | **Shipped** (commit TBD) | — | No |
+| 9 | Voice & transcript retention | **Shipped** (commit dfb0821) | — | No |
 | 10 | Compliance ops (BAAs, runbook, counsel) | Ongoing | Non-code | **Yes** |
 
 Remaining dev time: ~19-28 days. Phase 10 runs in parallel throughout.
