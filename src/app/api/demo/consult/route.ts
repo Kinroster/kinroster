@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callClaude } from "@/lib/claude";
 import { checkRate } from "@/lib/rate-limit";
+import { isDemoActive } from "@/lib/demos/registry";
 import {
   CAREGIVER_DEMO_SYSTEM_PROMPT,
   DOCTOR_DEMO_SYSTEM_PROMPT,
@@ -71,6 +72,13 @@ function isSameOrigin(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isDemoActive("consult")) {
+    return NextResponse.json(
+      { error: "Demo is temporarily disabled." },
+      { status: 503 }
+    );
+  }
+
   if (process.env.DEMO_CONSULT_DISABLED === "true") {
     return NextResponse.json(
       { error: "Demo is temporarily disabled." },
