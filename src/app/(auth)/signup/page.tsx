@@ -68,6 +68,8 @@ export default function SignupPage() {
           facility_type: facilityType,
           timezone,
           marketing_opt_in: marketingOptIn,
+          regulatory_region:
+            process.env.NEXT_PUBLIC_REGULATORY_REGION ?? "hipaa_us",
         },
         captchaToken: captchaToken ?? undefined,
       },
