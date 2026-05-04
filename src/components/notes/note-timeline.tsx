@@ -13,6 +13,10 @@ import type {
   DisclosureClass,
   StructuredNoteSection,
 } from "@/lib/prompts/shift-note";
+import {
+  AIDisclosure,
+  AI_DISCLOSURE_NOTE,
+} from "@/components/transparency/ai-disclosure";
 
 type OverCaptureWarning = {
   has_concerns: boolean;
@@ -47,7 +51,7 @@ const WARNING_CATEGORY_LABELS: Record<string, string> = {
   non_care_gossip: "Non-care gossip",
 };
 
-type NoteWithRelations = Note & {
+export type NoteWithRelations = Note & {
   residents: { first_name: string; last_name: string } | null;
   users: { full_name: string } | null;
 };
@@ -61,6 +65,9 @@ export function NoteTimeline({
 }) {
   return (
     <div className="space-y-3">
+      {notes.length > 0 && (
+        <AIDisclosure message={AI_DISCLOSURE_NOTE} />
+      )}
       {hiddenSensitiveCount > 0 && (
         <Card className="border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20">
           <CardContent className="py-3 flex items-start gap-2">
@@ -207,11 +214,19 @@ function StructuredNoteDisplay({ output }: { output: string }) {
       )}
 
       {parsed.flags.length > 0 && (
-        <div className="flex flex-wrap gap-1 pt-1">
+        <div className="space-y-1.5 pt-1">
           {parsed.flags.map((flag, i) => (
-            <Badge key={i} variant="destructive" className="text-xs">
-              {flag.type}: {flag.reason}
-            </Badge>
+            <div
+              key={i}
+              className="rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs"
+            >
+              <p className="font-medium uppercase tracking-wide text-destructive">
+                {flag.type.replace(/_/g, " ")}
+              </p>
+              <p className="mt-0.5 break-words text-foreground">
+                {flag.reason}
+              </p>
+            </div>
           ))}
         </div>
       )}

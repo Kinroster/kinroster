@@ -7,7 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Pencil, Mail } from "lucide-react";
 import { NoteTimeline } from "@/components/notes/note-timeline";
+import { NotesInfiniteList } from "@/components/notes/notes-infinite-list";
+import { NoteFilters } from "@/components/notes/note-filters";
 import { NoteInputForm } from "@/components/notes/note-input-form";
+import {
+  applyNotesFilters,
+  parseNotesFiltersFromSearchParams,
+} from "@/lib/notes-query";
 import { VoiceCallButton } from "@/components/notes/voice-call-button";
 import { FamilyContactList } from "@/components/residents/family-contact-list";
 import {
@@ -16,14 +22,20 @@ import {
   type DirectoryClinician,
 } from "@/components/clinicians/resident-clinician-list";
 import { ResidentDeleteControls } from "@/components/data-requests/resident-delete-controls";
+import { ExportReportButton } from "@/components/residents/export-report-dialog";
+import { QuickSummaryButton } from "@/components/residents/quick-summary-button";
 import type { Resident, FamilyContact } from "@/types/database";
 
 export default async function ResidentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const rawSearchParams = await searchParams;
+  const filters = parseNotesFiltersFromSearchParams(rawSearchParams);
   const user = await getAuthenticatedUser();
   const supabase = await createClient();
 
@@ -37,7 +49,8 @@ export default async function ResidentDetailPage({
   const resident = residentData as Resident | null;
   if (!resident) notFound();
 
-  const { data: notes } = await supabase
+  const INITIAL_PAGE_SIZE = 50;
+  let notesQuery = supabase
     .from("notes")
     .select(
       `
@@ -48,7 +61,16 @@ export default async function ResidentDetailPage({
     )
     .eq("resident_id", id)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(INITIAL_PAGE_SIZE);
+
+  notesQuery = applyNotesFilters(notesQuery, filters);
+
+  const { data: notes } = await notesQuery;
+
+  const initialNotes = (notes ?? []) as Parameters<
+    typeof NoteTimeline
+  >[0]["notes"];
+  const hasMoreNotes = initialNotes.length === INITIAL_PAGE_SIZE;
 
   // Phase 4: count sensitive notes the caller can't see (admins and authors
   // see them directly; everyone else gets a placeholder count).
@@ -112,7 +134,7 @@ export default async function ResidentDetailPage({
   const residentDisplayName = `${resident.first_name} ${resident.last_name}`;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-5">
+    <div className="mx-auto max-w-4xl px-4 py-5">
       {isAdmin && isDeletedPending && (
         <ResidentDeleteControls
           residentId={id}
@@ -139,26 +161,38 @@ export default async function ResidentDetailPage({
             </Badge>
           </div>
         </div>
-        {isAdmin && !isDeletedPending && (
+        {!isDeletedPending && (
           <div className="flex gap-1.5 flex-wrap justify-end">
-            <Link href={`/family/${id}/new`}>
-              <Button variant="outline" size="sm">
-                <Mail className="mr-1 h-3 w-3" />
-                Family Update
-              </Button>
-            </Link>
-            <Link href={`/residents/${id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-1 h-3 w-3" />
-                Edit
-              </Button>
-            </Link>
-            <ResidentDeleteControls
+            <QuickSummaryButton
               residentId={id}
-              residentName={residentDisplayName}
-              status={resident.status}
-              variant="header-button"
+              residentDisplay={residentDisplayName}
             />
+            <ExportReportButton
+              residentId={id}
+              residentDisplay={residentDisplayName}
+            />
+            {isAdmin && (
+              <>
+                <Link href={`/family/${id}/new`}>
+                  <Button variant="outline" size="sm">
+                    <Mail className="mr-1 h-3 w-3" />
+                    Family Update
+                  </Button>
+                </Link>
+                <Link href={`/residents/${id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <Pencil className="mr-1 h-3 w-3" />
+                    Edit
+                  </Button>
+                </Link>
+                <ResidentDeleteControls
+                  residentId={id}
+                  residentName={residentDisplayName}
+                  status={resident.status}
+                  variant="header-button"
+                />
+              </>
+            )}
           </div>
         )}
       </div>
@@ -211,16 +245,30 @@ export default async function ResidentDetailPage({
       <Separator />
 
       {/* Note timeline */}
-      <div className="mt-5">
-        <h3 className="mb-3 text-base font-medium">Notes</h3>
-        {(!notes || notes.length === 0) && hiddenSensitiveCount === 0 ? (
+      <div className="mt-5 space-y-3">
+        <h3 className="text-base font-medium">Notes</h3>
+        <NoteFilters
+          initial={{
+            start: filters.start,
+            end: filters.end,
+            search: filters.search,
+            incidents: filters.incidents ? "1" : undefined,
+          }}
+        />
+        {initialNotes.length === 0 && hiddenSensitiveCount === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No notes for this resident yet.
+            {filters.start || filters.end || filters.search || filters.incidents
+              ? "No notes match the current filters."
+              : "No notes for this resident yet."}
           </p>
         ) : (
-          <NoteTimeline
-            notes={(notes ?? []) as Parameters<typeof NoteTimeline>[0]["notes"]}
+          <NotesInfiniteList
+            key={JSON.stringify(filters)}
+            residentId={id}
+            initialNotes={initialNotes}
+            hasMore={hasMoreNotes}
             hiddenSensitiveCount={hiddenSensitiveCount}
+            filters={filters}
           />
         )}
       </div>

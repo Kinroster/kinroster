@@ -19,6 +19,8 @@ export const mockOrganization: Organization = {
   stripe_customer_id: null,
   stripe_subscription_id: null,
   settings: {},
+  bed_count: 8,
+  subscription_tier: "small",
   country: null,
   regulatory_region: "hipaa_us",
   default_output_language: "en",
