@@ -31,6 +31,14 @@ OUTPUT FORMAT (the "concerns" key is preserved for backward compatibility with s
   "incidents_this_week": <number>
 }`;
 
+import type { ResidentLocaleContext } from "@/lib/i18n/locale";
+import {
+  buildCulturalRegisterBlock,
+  buildOutputLanguageInstruction,
+} from "@/lib/prompts/_shared";
+
+export const WEEKLY_SUMMARY_PROMPT_VERSION = "2026-05-02-multilingual-v1";
+
 export function buildWeeklySummaryUserPrompt(params: {
   facilityName: string;
   residentFirstName: string;
@@ -45,6 +53,8 @@ export function buildWeeklySummaryUserPrompt(params: {
     shift: string | null;
     structured_output: string;
   }>;
+  localeContext?: ResidentLocaleContext | null;
+  outputLanguage?: string;
 }): string {
   const notesText = params.notes
     .map(
@@ -53,11 +63,17 @@ export function buildWeeklySummaryUserPrompt(params: {
     )
     .join("\n---\n");
 
+  const cultural = buildCulturalRegisterBlock(params.localeContext);
+  const outputLang =
+    params.outputLanguage ||
+    (params.localeContext ? params.localeContext.output_language : "");
+  const lang = outputLang ? buildOutputLanguageInstruction(outputLang) : "";
+
   return `Facility: ${params.facilityName}
 Resident: ${params.residentFirstName} ${params.residentLastName}
 Resident context: ${params.careNotesContext || "None provided"}
 Known conditions: ${params.conditions || "None documented"}
-Week: ${params.weekStart} to ${params.weekEnd}
+Week: ${params.weekStart} to ${params.weekEnd}${cultural}${lang}
 
 Shift notes from this week:
 ---
