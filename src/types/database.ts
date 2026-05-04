@@ -119,6 +119,7 @@ export type Database = {
           authorization_start_date: string | null
           communication_channels: string[]
           confidential_communication_notes: string | null
+          country_of_residence: string | null
           created_at: string
           email: string | null
           id: string
@@ -127,6 +128,7 @@ export type Database = {
           name: string
           personal_representative: boolean
           phone: string | null
+          preferred_communication_language: string | null
           receives_updates: boolean
           relationship: string
           resident_id: string
@@ -140,6 +142,7 @@ export type Database = {
           authorization_start_date?: string | null
           communication_channels?: string[]
           confidential_communication_notes?: string | null
+          country_of_residence?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -148,6 +151,7 @@ export type Database = {
           name: string
           personal_representative?: boolean
           phone?: string | null
+          preferred_communication_language?: string | null
           receives_updates?: boolean
           relationship: string
           resident_id: string
@@ -161,6 +165,7 @@ export type Database = {
           authorization_start_date?: string | null
           communication_channels?: string[]
           confidential_communication_notes?: string | null
+          country_of_residence?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -169,6 +174,7 @@ export type Database = {
           name?: string
           personal_representative?: boolean
           phone?: string | null
+          preferred_communication_language?: string | null
           receives_updates?: boolean
           relationship?: string
           resident_id?: string
@@ -365,11 +371,16 @@ export type Database = {
       organizations: {
         Row: {
           bed_count: number | null
+          country: string | null
           created_at: string
+          default_clinical_language: string
+          default_output_language: string
           email_from_name: string | null
           email_reply_to: string | null
+          feature_metric_trends_enabled: boolean
           id: string
           name: string
+          regulatory_region: string
           settings: Json | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -382,11 +393,16 @@ export type Database = {
         }
         Insert: {
           bed_count?: number | null
+          country?: string | null
           created_at?: string
+          default_clinical_language?: string
+          default_output_language?: string
           email_from_name?: string | null
           email_reply_to?: string | null
+          feature_metric_trends_enabled?: boolean
           id?: string
           name: string
+          regulatory_region?: string
           settings?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -399,11 +415,16 @@ export type Database = {
         }
         Update: {
           bed_count?: number | null
+          country?: string | null
           created_at?: string
+          default_clinical_language?: string
+          default_output_language?: string
           email_from_name?: string | null
           email_reply_to?: string | null
+          feature_metric_trends_enabled?: boolean
           id?: string
           name?: string
+          regulatory_region?: string
           settings?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -435,47 +456,83 @@ export type Database = {
         Row: {
           care_notes_context: string | null
           conditions: string | null
+          country_of_origin: string | null
           created_at: string
+          cultural_taboos: string[]
           date_of_birth: string | null
+          dietary_restrictions: string[]
+          family_name: string | null
           first_name: string
+          given_name: string | null
+          honorific_preference: string | null
           id: string
           last_name: string
+          lunar_calendar_dob: string | null
           move_in_date: string | null
+          name_pronunciation: string | null
           organization_id: string
           preferences: string | null
+          preferred_language: string | null
+          religion: string | null
           room_number: string | null
+          secondary_languages: string[]
           status: string
           updated_at: string
+          years_in_country: number | null
         }
         Insert: {
           care_notes_context?: string | null
           conditions?: string | null
+          country_of_origin?: string | null
           created_at?: string
+          cultural_taboos?: string[]
           date_of_birth?: string | null
+          dietary_restrictions?: string[]
+          family_name?: string | null
           first_name: string
+          given_name?: string | null
+          honorific_preference?: string | null
           id?: string
           last_name: string
+          lunar_calendar_dob?: string | null
           move_in_date?: string | null
+          name_pronunciation?: string | null
           organization_id: string
           preferences?: string | null
+          preferred_language?: string | null
+          religion?: string | null
           room_number?: string | null
+          secondary_languages?: string[]
           status?: string
           updated_at?: string
+          years_in_country?: number | null
         }
         Update: {
           care_notes_context?: string | null
           conditions?: string | null
+          country_of_origin?: string | null
           created_at?: string
+          cultural_taboos?: string[]
           date_of_birth?: string | null
+          dietary_restrictions?: string[]
+          family_name?: string | null
           first_name?: string
+          given_name?: string | null
+          honorific_preference?: string | null
           id?: string
           last_name?: string
+          lunar_calendar_dob?: string | null
           move_in_date?: string | null
+          name_pronunciation?: string | null
           organization_id?: string
           preferences?: string | null
+          preferred_language?: string | null
+          religion?: string | null
           room_number?: string | null
+          secondary_languages?: string[]
           status?: string
           updated_at?: string
+          years_in_country?: number | null
         }
         Relationships: [
           {
@@ -495,7 +552,9 @@ export type Database = {
           id: string
           is_active: boolean
           organization_id: string
+          preferred_language: string | null
           role: string
+          secondary_languages: string[]
           updated_at: string
         }
         Insert: {
@@ -505,7 +564,9 @@ export type Database = {
           id: string
           is_active?: boolean
           organization_id: string
+          preferred_language?: string | null
           role?: string
+          secondary_languages?: string[]
           updated_at?: string
         }
         Update: {
@@ -515,7 +576,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           organization_id?: string
+          preferred_language?: string | null
           role?: string
+          secondary_languages?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -730,6 +793,7 @@ export type Database = {
       }
       clinicians: {
         Row: {
+          clinical_language: string
           created_at: string
           email: string
           full_name: string
@@ -739,10 +803,12 @@ export type Database = {
           npi: string | null
           organization_id: string
           phone: string | null
+          secondary_clinical_language: string | null
           specialty: string | null
           updated_at: string
         }
         Insert: {
+          clinical_language?: string
           created_at?: string
           email: string
           full_name: string
@@ -752,10 +818,12 @@ export type Database = {
           npi?: string | null
           organization_id: string
           phone?: string | null
+          secondary_clinical_language?: string | null
           specialty?: string | null
           updated_at?: string
         }
         Update: {
+          clinical_language?: string
           created_at?: string
           email?: string
           full_name?: string
@@ -765,6 +833,7 @@ export type Database = {
           npi?: string | null
           organization_id?: string
           phone?: string | null
+          secondary_clinical_language?: string | null
           specialty?: string | null
           updated_at?: string
         }

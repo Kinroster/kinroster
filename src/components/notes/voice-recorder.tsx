@@ -9,8 +9,10 @@ type RecordingState = "idle" | "recording" | "transcribing";
 
 export function VoiceRecorder({
   onTranscript,
+  language,
 }: {
   onTranscript: (text: string) => void;
+  language?: string;
 }) {
   const [state, setState] = useState<RecordingState>("idle");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -63,6 +65,9 @@ export function VoiceRecorder({
         try {
           const formData = new FormData();
           formData.append("audio", audioBlob);
+          if (language) {
+            formData.append("caregiverLanguage", language);
+          }
 
           const response = await fetch("/api/transcribe", {
             method: "POST",
@@ -93,7 +98,7 @@ export function VoiceRecorder({
         "Microphone access denied. Please allow microphone access in your browser settings."
       );
     }
-  }, [onTranscript, stopRecording]);
+  }, [onTranscript, stopRecording, language]);
 
   return (
     <Button

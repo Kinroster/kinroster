@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const audio = formData.get("audio") as Blob | null;
+  const caregiverLanguage = formData.get("caregiverLanguage");
 
   if (!audio) {
     return NextResponse.json({ error: "Audio file required" }, { status: 400 });
@@ -27,11 +28,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Send to OpenAI Whisper API
+    // Send to OpenAI Whisper API. Language hint comes from the caregiver's
+    // preferred_language (BCP-47, e.g. 'zh-TW', 'vi', 'id', 'en'). Whisper
+    // accepts ISO-639-1 codes only, so we strip any region tag. When unset,
+    // Whisper auto-detects — handles caregivers without a profile language
+    // and tolerates code-switching better than locking a language.
     const whisperFormData = new FormData();
     whisperFormData.append("file", audio, "recording.webm");
     whisperFormData.append("model", "whisper-1");
-    whisperFormData.append("language", "en");
+    whisperFormData.append("response_format", "verbose_json");
+
+    if (typeof caregiverLanguage === "string" && caregiverLanguage.length > 0) {
+      const isoCode = caregiverLanguage.split("-")[0].toLowerCase();
+      if (/^[a-z]{2}$/.test(isoCode)) {
+        whisperFormData.append("language", isoCode);
+      }
+    }
 
     const response = await fetch(
       "https://api.openai.com/v1/audio/transcriptions",
@@ -54,8 +66,13 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
-    // Audio is never stored — only the transcript is returned
-    return NextResponse.json({ transcript: result.text });
+    // Audio is never stored — only the transcript and Whisper's detected
+    // language are returned. Detected language is ISO-639-1 (e.g. 'vi'); the
+    // client persists it on the voice_session row.
+    return NextResponse.json({
+      transcript: result.text,
+      detectedLanguage: result.language ?? null,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
