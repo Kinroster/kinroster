@@ -52,6 +52,7 @@ After that, pick the section relevant to the work you're picking up.
 - [entity-model-and-auth.md](./engineering/entity-model-and-auth.md)
 - [prompt-engineering.md](./engineering/prompt-engineering.md)
 - [build-plan.md](./engineering/build-plan.md)
+- [resident-conversation-thread-plan.md](./engineering/resident-conversation-thread-plan.md) — 8-phase plan for per-resident rolling AI conversation thread, multi-party voice contributions, tiered SKU economics
 - [vapi-voice-integration.md](./engineering/vapi-voice-integration.md)
 - [pre-pilot-correctness-fixes.md](./engineering/pre-pilot-correctness-fixes.md)
 
