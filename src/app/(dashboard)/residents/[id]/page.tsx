@@ -34,6 +34,7 @@ import { ExportReportButton } from "@/components/residents/export-report-dialog"
 import { QuickSummaryButton } from "@/components/residents/quick-summary-button";
 import type { Resident, FamilyContact } from "@/types/database";
 import { authorTypeFromRole } from "@/lib/notes/author-type";
+import { AIConversationThread } from "@/components/residents/ai-conversation-thread";
 
 export default async function ResidentDetailPage({
   params,
@@ -198,6 +199,23 @@ export default async function ResidentDetailPage({
       staffDictationConsent.jurisdiction !== expectedJurisdiction;
   }
 
+  // Phase 1 follow-up: pull the resident's AI conversation thread so we
+  // can render it on the page. Service-role writes the row; org users
+  // (including caregivers) can SELECT it via the RLS policy on the table.
+  const { data: threadRow } = await supabase
+    .from("resident_conversation_threads")
+    .select("body, version, last_updated_at, update_giving_up")
+    .eq("resident_id", id)
+    .maybeSingle();
+  const thread = threadRow as
+    | {
+        body: Record<string, unknown> | null;
+        version: number;
+        last_updated_at: string | null;
+        update_giving_up: boolean;
+      }
+    | null;
+
   const isDeletedPending = resident.status === "deleted_pending";
   const residentDisplayName = `${resident.first_name} ${resident.last_name}`;
 
@@ -359,6 +377,15 @@ export default async function ResidentDetailPage({
           </Link>
         </div>
       )}
+
+      {/* AI conversation thread */}
+      <AIConversationThread
+        body={thread?.body ?? null}
+        version={thread?.version ?? null}
+        lastUpdatedAt={thread?.last_updated_at ?? null}
+        updateGivingUp={thread?.update_giving_up ?? false}
+        isAdmin={isAdmin}
+      />
 
       {/* Conditions & Preferences */}
       {(resident.conditions || resident.preferences) && (

@@ -291,11 +291,13 @@ export async function POST(request: NextRequest) {
 
   let recentNotesSummary: string;
   let recentIncidentsLine: string;
+  let activeConcernsLine = "";
 
   if (threadHasContent) {
     const concernsLine = threadBody.active_concerns
       .map((c) => `${c.concern} (${c.trend}, since ${c.since})`)
       .join("; ");
+    activeConcernsLine = concernsLine;
     recentNotesSummary = concernsLine
       ? `${threadBody.narrative}\n\nActive concerns: ${concernsLine}`
       : threadBody.narrative;
@@ -369,6 +371,7 @@ export async function POST(request: NextRequest) {
       careNotesContext: resident.care_notes_context,
       recentNotesSummary,
       recentIncidents: recentIncidentsLine,
+      activeConcerns: activeConcernsLine,
       keyterms,
     }),
     firstMessageMode:

@@ -2064,6 +2064,120 @@ export type Database = {
           },
         ]
       }
+      family_user_links: {
+        Row: {
+          id: string
+          organization_id: string
+          user_id: string
+          family_contact_id: string
+          phone_at_verification: string
+          phone_verified_at: string | null
+          verification_method: string
+          link_status: string
+          invited_by_user_id: string
+          invited_at: string
+          revoked_at: string | null
+          revoked_by_user_id: string | null
+          revocation_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          user_id: string
+          family_contact_id: string
+          phone_at_verification: string
+          phone_verified_at?: string | null
+          verification_method: string
+          link_status?: string
+          invited_by_user_id: string
+          invited_at?: string
+          revoked_at?: string | null
+          revoked_by_user_id?: string | null
+          revocation_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          user_id?: string
+          family_contact_id?: string
+          phone_at_verification?: string
+          phone_verified_at?: string | null
+          verification_method?: string
+          link_status?: string
+          invited_by_user_id?: string
+          invited_at?: string
+          revoked_at?: string | null
+          revoked_by_user_id?: string | null
+          revocation_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_voice_memos: {
+        Row: {
+          id: string
+          organization_id: string
+          resident_id: string
+          family_user_link_id: string
+          uploaded_by_user_id: string
+          storage_path: string | null
+          audio_deleted_at: string | null
+          duration_seconds: number | null
+          moderation_status: string
+          moderated_by_user_id: string | null
+          moderated_at: string | null
+          moderation_reason: string | null
+          transcript: string | null
+          transcription_error: string | null
+          note_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          resident_id: string
+          family_user_link_id: string
+          uploaded_by_user_id: string
+          storage_path?: string | null
+          audio_deleted_at?: string | null
+          duration_seconds?: number | null
+          moderation_status?: string
+          moderated_by_user_id?: string | null
+          moderated_at?: string | null
+          moderation_reason?: string | null
+          transcript?: string | null
+          transcription_error?: string | null
+          note_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          resident_id?: string
+          family_user_link_id?: string
+          uploaded_by_user_id?: string
+          storage_path?: string | null
+          audio_deleted_at?: string | null
+          duration_seconds?: number | null
+          moderation_status?: string
+          moderated_by_user_id?: string | null
+          moderated_at?: string | null
+          moderation_reason?: string | null
+          transcript?: string | null
+          transcription_error?: string | null
+          note_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2233,4 +2347,6 @@ export type ResidentDecisionalCapacityHistory = Database["public"]["Tables"]["re
 export type ResidentRecordingConsent = Database["public"]["Tables"]["resident_recording_consents"]["Row"];
 export type ResidentConversationThread = Database["public"]["Tables"]["resident_conversation_threads"]["Row"];
 export type ResidentConversationThreadVersion = Database["public"]["Tables"]["resident_conversation_thread_versions"]["Row"];
+export type FamilyUserLink = Database["public"]["Tables"]["family_user_links"]["Row"];
+export type FamilyVoiceMemo = Database["public"]["Tables"]["family_voice_memos"]["Row"];
 
