@@ -32,6 +32,7 @@ describe("vapi", () => {
         care_context: "Prefers morning walks",
         recent_notes_summary: "5/1: ate full meal. 4/30: walked 15 min.",
         recent_incidents: "no recent incidents",
+        active_concerns: "none on record",
       });
     });
 
