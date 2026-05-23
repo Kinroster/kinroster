@@ -123,6 +123,63 @@ OUTPUT FORMAT:
 
 If there are no flags, return an empty array: "flags": [].`;
 
+export interface ShiftNoteUserPromptParts {
+  /**
+   * Cached portion of the user message — per-resident static context
+   * that repeats across every shift-note structuring call for the same
+   * resident. Pass to callClaude as `userPromptCachedPrefix`.
+   */
+  cachedPrefix: string;
+  /**
+   * Uncached tail — per-note variable fields (timestamp, caregiver,
+   * raw input). Pass to callClaude as `userPrompt`.
+   */
+  volatileTail: string;
+}
+
+/**
+ * Build the cached/volatile split of the shift-note user prompt. The
+ * cached prefix contains resident name + context + conditions +
+ * cultural register + output-language instruction (~300 tokens for a
+ * typical resident) — invariant across all notes about this resident
+ * in a shift. The volatile tail is per-call.
+ */
+export function buildShiftNoteUserPromptParts(params: {
+  residentFirstName: string;
+  residentLastName: string;
+  careNotesContext: string | null;
+  conditions: string | null;
+  timestamp: string;
+  caregiverName: string;
+  rawInput: string;
+  localeContext?: ResidentLocaleContext | null;
+}): ShiftNoteUserPromptParts {
+  const cultural = buildCulturalRegisterBlock(params.localeContext);
+  const lang = params.localeContext
+    ? buildOutputLanguageInstruction(params.localeContext.output_language)
+    : "";
+
+  const cachedPrefix = `Resident: ${params.residentFirstName} ${params.residentLastName}
+Resident context: ${params.careNotesContext || "None provided"}
+Known conditions: ${params.conditions || "None documented"}
+Note type: Shift Note${cultural}${lang}`;
+
+  const volatileTail = `Date/Time: ${params.timestamp}
+Caregiver: ${params.caregiverName}
+
+Caregiver's raw note:
+"""
+${params.rawInput}
+"""`;
+
+  return { cachedPrefix, volatileTail };
+}
+
+/**
+ * Legacy single-string builder. Kept for callers that haven't migrated
+ * to the cached/volatile split yet (and for tests that compare exact
+ * output). New callers should prefer buildShiftNoteUserPromptParts.
+ */
 export function buildShiftNoteUserPrompt(params: {
   residentFirstName: string;
   residentLastName: string;
@@ -131,27 +188,10 @@ export function buildShiftNoteUserPrompt(params: {
   timestamp: string;
   caregiverName: string;
   rawInput: string;
-  /** Optional cultural + linguistic context. When provided, the section text
-   *  and summary are emitted in the resident's output language and the
-   *  cultural register guides phrasing. */
   localeContext?: ResidentLocaleContext | null;
 }): string {
-  const cultural = buildCulturalRegisterBlock(params.localeContext);
-  const lang = params.localeContext
-    ? buildOutputLanguageInstruction(params.localeContext.output_language)
-    : "";
-
-  return `Resident: ${params.residentFirstName} ${params.residentLastName}
-Resident context: ${params.careNotesContext || "None provided"}
-Known conditions: ${params.conditions || "None documented"}
-Note type: Shift Note
-Date/Time: ${params.timestamp}
-Caregiver: ${params.caregiverName}${cultural}${lang}
-
-Caregiver's raw note:
-"""
-${params.rawInput}
-"""`;
+  const { cachedPrefix, volatileTail } = buildShiftNoteUserPromptParts(params);
+  return `${cachedPrefix}\n${volatileTail}`;
 }
 
 export interface StructuredNoteSection {

@@ -5,7 +5,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Mail, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import {
+  Pencil,
+  Mail,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  Mic,
+  MicOff,
+} from "lucide-react";
 import { NoteTimeline } from "@/components/notes/note-timeline";
 import { NotesInfiniteList } from "@/components/notes/notes-infinite-list";
 import { NoteFilters } from "@/components/notes/note-filters";
@@ -141,6 +149,54 @@ export default async function ResidentDetailPage({
     representative_relationship: string | null;
   } | null;
 
+  // Active staff_dictation recording consent for the voice/start gate
+  // status badge. Mismatch detection requires the org's expected
+  // jurisdiction; lazy-resolve only when a row exists.
+  const { data: recConsentData } = await supabase
+    .from("resident_recording_consents")
+    .select("id, jurisdiction, consent_class")
+    .eq("resident_id", id)
+    .eq("consent_class", "staff_dictation")
+    .is("withdrawn_at", null)
+    .order("consented_at", { ascending: false })
+    .limit(1);
+  const staffDictationConsent =
+    (recConsentData as Array<{
+      id: string;
+      jurisdiction: string;
+      consent_class: string;
+    }> | null)?.[0] ?? null;
+
+  let expectedJurisdiction: string | null = null;
+  let recordingConsentMismatch = false;
+  if (isAdmin) {
+    const { data: orgRow } = await supabase
+      .from("organizations")
+      .select("regulatory_region, settings")
+      .eq("id", user.organization_id)
+      .single();
+    const typedOrg = orgRow as
+      | {
+          regulatory_region: string;
+          settings: Record<string, unknown> | null;
+        }
+      | null;
+    const { resolveExpectedJurisdiction } = await import(
+      "@/lib/recording-consent/active-consent"
+    );
+    expectedJurisdiction = resolveExpectedJurisdiction(
+      (typedOrg?.regulatory_region as
+        | "hipaa_us"
+        | "pdpa_tw"
+        | "gdpr_eu"
+        | undefined) ?? "hipaa_us",
+      typedOrg?.settings ?? null
+    );
+    recordingConsentMismatch =
+      staffDictationConsent !== null &&
+      staffDictationConsent.jurisdiction !== expectedJurisdiction;
+  }
+
   const isDeletedPending = resident.status === "deleted_pending";
   const residentDisplayName = `${resident.first_name} ${resident.last_name}`;
 
@@ -254,6 +310,50 @@ export default async function ResidentDetailPage({
           <Link href={`/residents/${id}/capacity`}>
             <Button variant="outline" size="sm">
               {capacity ? "Manage" : "Assess"}
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Recording consent */}
+      {isAdmin && (
+        <div className="mb-4 rounded-xl border bg-card p-3 text-sm flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="font-medium flex items-center gap-1.5">
+              {!staffDictationConsent ? (
+                <>
+                  <MicOff className="h-4 w-4 text-muted-foreground" />
+                  Recording consent not captured
+                </>
+              ) : recordingConsentMismatch ? (
+                <>
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  Recording consent — jurisdiction mismatch
+                </>
+              ) : (
+                <>
+                  <Mic className="h-4 w-4 text-green-600" />
+                  Recording consent active ({staffDictationConsent.jurisdiction})
+                </>
+              )}
+            </div>
+            {staffDictationConsent && recordingConsentMismatch && (
+              <p className="text-xs text-amber-700">
+                Active: {staffDictationConsent.jurisdiction}; expected:{" "}
+                {expectedJurisdiction}. Voice calls will be blocked until
+                re-captured.
+              </p>
+            )}
+            {!staffDictationConsent && (
+              <p className="text-xs text-muted-foreground">
+                Voice intake is hard-blocked until staff_dictation consent
+                is captured.
+              </p>
+            )}
+          </div>
+          <Link href={`/residents/${id}/recording-consent`}>
+            <Button variant="outline" size="sm">
+              {staffDictationConsent ? "Manage" : "Capture"}
             </Button>
           </Link>
         </div>
