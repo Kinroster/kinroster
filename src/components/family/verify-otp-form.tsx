@@ -42,7 +42,7 @@ export function VerifyOtpForm({
       }
       const { redirectTo } = (await res.json()) as { redirectTo?: string };
       toast.success("Verified.");
-      router.push(redirectTo || "/family");
+      router.push(redirectTo || "/family-portal");
     } finally {
       setSubmitting(false);
     }

@@ -2,9 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 
 // Phase 4: family portal layout — minimal shell distinct from the
 // caregiver/admin AppShell. Auth enforcement lives in the individual
-// pages (the dashboard + per-resident page redirect to /family/verify;
-// /family/verify itself must be reachable unauthenticated). The layout
-// just shows the chrome.
+// pages (the dashboard + per-resident page redirect to
+// /family-portal/verify; /family-portal/verify itself must be
+// reachable unauthenticated). The layout just shows the chrome.
+//
+// Routed under /family-portal/* (not /family/*) because the admin
+// "Family communications" tab at /family already owns that URL.
 
 export default async function FamilyLayout({
   children,

@@ -7,8 +7,8 @@ import { verifySmsOtp } from "@/lib/external/sms-otp";
 // Phase 4: family-side OTP verification.
 //
 // The family member receives the SMS code, opens
-// /family/verify?link=<id> in their browser, enters the code, and
-// POSTs here. On success:
+// /family-portal/verify?link=<id> in their browser, enters the code,
+// and POSTs here. On success:
 //   1. Confirms the auth.users row via verifyOtp (Supabase Auth flips
 //      phone_confirmed_at).
 //   2. Flips family_user_links.link_status to 'active' and stamps
@@ -130,6 +130,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     status: "active",
     linkId: link.id,
-    redirectTo: "/family",
+    redirectTo: "/family-portal",
   });
 }
