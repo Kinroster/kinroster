@@ -114,6 +114,7 @@ export const mockNote: Note = {
   organization_id: "org-1",
   resident_id: "resident-1",
   author_id: "user-cg-1",
+  author_type: "caregiver",
   note_type: "shift_note",
   raw_input:
     "dorothy was in good spirits today, ate all her lunch, went for a walk in the garden",

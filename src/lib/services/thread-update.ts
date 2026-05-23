@@ -35,6 +35,10 @@ import {
   threadBodyOrEmpty,
   type ThreadBody,
 } from "@/lib/prompts/thread-update";
+import {
+  authorTypeFromRole,
+  type AuthorType,
+} from "@/lib/notes/author-type";
 import type { Json } from "@/types/database";
 
 function toJson(body: ThreadBody): Json {
@@ -64,6 +68,7 @@ interface NoteRow {
   raw_input: string;
   structured_output: string | null;
   author_id: string;
+  author_type: string | null;
   residents:
     | {
         first_name: string;
@@ -81,22 +86,6 @@ interface ThreadRow {
   update_attempts: number;
 }
 
-type AuthorType = "caregiver" | "admin" | "clinician" | "family";
-
-function authorTypeFromRole(role: string | null | undefined): AuthorType {
-  switch (role) {
-    case "admin":
-    case "compliance_admin":
-      return "admin";
-    case "clinician":
-      return "clinician";
-    case "family":
-      return "family";
-    default:
-      return "caregiver";
-  }
-}
-
 export async function updateThreadFromStructuredNote(
   input: ThreadUpdateInput
 ): Promise<ThreadUpdateResult> {
@@ -106,7 +95,7 @@ export async function updateThreadFromStructuredNote(
   const { data: noteData } = await admin
     .from("notes")
     .select(
-      "id, created_at, raw_input, structured_output, author_id, residents(first_name, last_name, conditions, care_notes_context)"
+      "id, created_at, raw_input, structured_output, author_id, author_type, residents(first_name, last_name, conditions, care_notes_context)"
     )
     .eq("id", input.noteId)
     .single();
@@ -180,7 +169,10 @@ export async function updateThreadFromStructuredNote(
     };
   }
 
-  // 4. Resolve author info.
+  // 4. Resolve author info. Prefer the persisted note.author_type from
+  // Phase 2 (00031a) — the writer recorded the contribution class at
+  // insert time. Fall back to deriving from users.role for the
+  // backfill window where pre-Phase-2 notes carry NULL.
   const { data: authorRow } = await admin
     .from("users")
     .select("full_name, role")
@@ -190,7 +182,9 @@ export async function updateThreadFromStructuredNote(
     | { full_name: string | null; role: string | null }
     | null;
   const authorName = author?.full_name || "Unknown";
-  const authorType = authorTypeFromRole(author?.role);
+  const authorType: AuthorType =
+    (note.author_type as AuthorType | null) ??
+    authorTypeFromRole(author?.role);
 
   // 5. Parse the note's structured_output.
   let newNoteStructured: unknown;

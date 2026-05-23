@@ -19,6 +19,7 @@ import {
   threadBodyOrEmpty,
   type ThreadBody,
 } from "@/lib/prompts/thread-update";
+import { authorTypeFromRole } from "@/lib/notes/author-type";
 
 interface NoteSummaryRow {
   created_at: string;
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   const { data: appUser } = await supabase
     .from("users")
-    .select("id, full_name, organization_id")
+    .select("id, full_name, organization_id, role")
     .eq("id", authUser.id)
     .single();
 
@@ -222,6 +223,15 @@ export async function POST(request: NextRequest) {
       organization_id: appUser.organization_id,
       resident_id: resident.id,
       caregiver_id: appUser.id,
+      // Phase 2 (00031a): author_id + author_type carry the
+      // generalized contribution class. caregiver_id is retained for
+      // backward compatibility during the 00031a → 00031b window;
+      // Phase 3 (clinician) and Phase 4 (family) will populate these
+      // with non-caregiver values.
+      author_id: appUser.id,
+      author_type: authorTypeFromRole(
+        (appUser as { role?: string | null }).role
+      ),
       call_type: "caregiver_intake",
       status: "initiated",
     })

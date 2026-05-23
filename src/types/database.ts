@@ -383,6 +383,7 @@ export type Database = {
       notes: {
         Row: {
           author_id: string
+          author_type: string | null
           created_at: string
           edited_output: string | null
           flagged_as_incident: boolean
@@ -407,6 +408,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          author_type?: string | null
           created_at?: string
           edited_output?: string | null
           flagged_as_incident?: boolean
@@ -431,6 +433,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          author_type?: string | null
           created_at?: string
           edited_output?: string | null
           flagged_as_incident?: boolean
@@ -699,6 +702,8 @@ export type Database = {
       }
       voice_sessions: {
         Row: {
+          author_id: string | null
+          author_type: string | null
           call_type: string
           caregiver_id: string
           created_at: string
@@ -717,6 +722,8 @@ export type Database = {
           vapi_call_id: string | null
         }
         Insert: {
+          author_id?: string | null
+          author_type?: string | null
           call_type?: string
           caregiver_id: string
           created_at?: string
@@ -735,6 +742,8 @@ export type Database = {
           vapi_call_id?: string | null
         }
         Update: {
+          author_id?: string | null
+          author_type?: string | null
           call_type?: string
           caregiver_id?: string
           created_at?: string
@@ -2062,6 +2071,7 @@ export type Database = {
     Functions: {
       get_user_org_id: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
       has_role: {
         Args: { p_role: string }
         Returns: boolean

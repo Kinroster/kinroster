@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, AlertTriangle, Check, Pencil } from "lucide-react";
+import type { AuthorType } from "@/lib/notes/author-type";
 
 const MAX_CHARS = 2000;
 
@@ -29,9 +30,17 @@ type FlowStep = "input" | "classifying" | "structuring" | "review" | "incident_p
 export function NoteInputForm({
   residentId,
   organizationId,
+  authorType,
 }: {
   residentId: string;
   organizationId: string;
+  /**
+   * Phase 2 (00031a): contribution class of the logged-in user, derived
+   * server-side from users.role. Persisted on the note row alongside
+   * author_id so the conversation-thread updater + downstream consumers
+   * don't need to re-query users.
+   */
+  authorType: AuthorType;
 }) {
   const [rawInput, setRawInput] = useState("");
   const [noteType, setNoteType] = useState<string>("shift_note");
@@ -66,6 +75,7 @@ export function NoteInputForm({
         organization_id: organizationId,
         resident_id: residentId,
         author_id: authUser!.id,
+        author_type: authorType,
         note_type: noteType as "shift_note" | "incident" | "observation",
         raw_input: rawInput.trim(),
         shift: shift as "morning" | "afternoon" | "night",

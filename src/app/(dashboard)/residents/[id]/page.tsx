@@ -33,6 +33,7 @@ import { ResidentDeleteControls } from "@/components/data-requests/resident-dele
 import { ExportReportButton } from "@/components/residents/export-report-dialog";
 import { QuickSummaryButton } from "@/components/residents/quick-summary-button";
 import type { Resident, FamilyContact } from "@/types/database";
+import { authorTypeFromRole } from "@/lib/notes/author-type";
 
 export default async function ResidentDetailPage({
   params,
@@ -401,6 +402,7 @@ export default async function ResidentDetailPage({
         <NoteInputForm
           residentId={id}
           organizationId={user.organization_id}
+          authorType={authorTypeFromRole(user.role)}
         />
       </div>
 
