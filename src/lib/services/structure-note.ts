@@ -23,6 +23,7 @@ import {
   type StructuredNoteOutput,
 } from "@/lib/prompts/shift-note";
 import type { ResidentLocaleContext } from "@/lib/i18n/locale";
+import { inngest } from "@/lib/inngest/client";
 
 export const MAX_STRUCTURING_ATTEMPTS = 5;
 
@@ -80,6 +81,8 @@ interface NoteRow {
   raw_input: string;
   created_at: string;
   author_id: string;
+  organization_id: string;
+  resident_id: string;
   structuring_attempts: number;
   residents:
     | {
@@ -102,7 +105,7 @@ export async function structureNote(
   const { data: noteData } = await supabase
     .from("notes")
     .select(
-      "id, raw_input, created_at, author_id, structuring_attempts, residents(first_name, last_name, care_notes_context, conditions)"
+      "id, raw_input, created_at, author_id, organization_id, resident_id, structuring_attempts, residents(first_name, last_name, care_notes_context, conditions)"
     )
     .eq("id", noteId)
     .single();
@@ -213,6 +216,27 @@ export async function structureNote(
         sensitive_category: structured.sensitive_category ?? null,
       })
       .eq("id", noteId);
+
+    // Phase 1: kick off the per-resident conversation-thread updater.
+    // Fire-and-forget — Inngest enforces per-resident concurrency=1
+    // and idempotency via triggering_note_id, so a missed trigger here
+    // would just delay the thread update until the next note. We
+    // intentionally don't fail structuring if the event-send fails.
+    try {
+      await inngest.send({
+        name: "thread/note-structured",
+        data: {
+          noteId: note.id,
+          residentId: note.resident_id,
+          organizationId: note.organization_id,
+        },
+      });
+    } catch (sendErr) {
+      console.error("thread/note-structured event send failed", {
+        noteId: note.id,
+        error: sendErr instanceof Error ? sendErr.message : sendErr,
+      });
+    }
 
     return {
       success: true,

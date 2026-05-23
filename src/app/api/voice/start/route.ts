@@ -15,6 +15,10 @@ import {
   resolveExpectedJurisdiction,
   type RegulatoryRegion,
 } from "@/lib/recording-consent/active-consent";
+import {
+  threadBodyOrEmpty,
+  type ThreadBody,
+} from "@/lib/prompts/thread-update";
 
 interface NoteSummaryRow {
   created_at: string;
@@ -257,32 +261,69 @@ export async function POST(request: NextRequest) {
     getResidentContext(resident.id),
   ]);
 
-  // Recent grounding: last 5 notes' summaries + last 14 days' incidents.
-  // Both fetches are constrained to this resident in the caller's org.
-  const fourteenDaysAgo = new Date(
-    Date.now() - 14 * 24 * 60 * 60 * 1000
-  ).toISOString();
-  const [recentNotesRes, recentIncidentsRes] = await Promise.all([
-    supabase
-      .from("notes")
-      .select("created_at, structured_output, edited_output, flagged_as_incident")
-      .eq("resident_id", resident.id)
-      .eq("organization_id", appUser.organization_id)
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("notes")
-      .select("created_at, structured_output, edited_output, flagged_as_incident")
-      .eq("resident_id", resident.id)
-      .eq("organization_id", appUser.organization_id)
-      .eq("flagged_as_incident", true)
-      .gte("created_at", fourteenDaysAgo)
-      .order("created_at", { ascending: false })
-      .limit(10),
-  ]);
+  // Grounding: Phase 1 prefers the rolling conversation thread. Fall
+  // back to the legacy last-5-notes + 14-day-incidents stitching when
+  // no thread exists yet (first call for this resident, or the Inngest
+  // updater hasn't run yet). Once the thread updater is stable, the
+  // fallback path can be removed.
+  const { data: threadRow } = await supabase
+    .from("resident_conversation_threads")
+    .select("body, version, update_giving_up, last_updated_at")
+    .eq("resident_id", resident.id)
+    .eq("organization_id", appUser.organization_id)
+    .maybeSingle();
 
-  const recentNotes = (recentNotesRes.data ?? []) as NoteSummaryRow[];
-  const recentIncidents = (recentIncidentsRes.data ?? []) as NoteSummaryRow[];
+  const threadBody: ThreadBody = threadBodyOrEmpty(
+    (threadRow as { body: unknown } | null)?.body as never
+  );
+  const threadHasContent =
+    threadBody.narrative.length > 0 || threadBody.active_concerns.length > 0;
+
+  let recentNotesSummary: string;
+  let recentIncidentsLine: string;
+
+  if (threadHasContent) {
+    const concernsLine = threadBody.active_concerns
+      .map((c) => `${c.concern} (${c.trend}, since ${c.since})`)
+      .join("; ");
+    recentNotesSummary = concernsLine
+      ? `${threadBody.narrative}\n\nActive concerns: ${concernsLine}`
+      : threadBody.narrative;
+    recentIncidentsLine = threadBody.recent_incidents
+      .map((i) => `${i.date}: ${i.summary}`)
+      .join("\n");
+  } else {
+    // Legacy fallback path.
+    const fourteenDaysAgo = new Date(
+      Date.now() - 14 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    const [recentNotesRes, recentIncidentsRes] = await Promise.all([
+      supabase
+        .from("notes")
+        .select(
+          "created_at, structured_output, edited_output, flagged_as_incident"
+        )
+        .eq("resident_id", resident.id)
+        .eq("organization_id", appUser.organization_id)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("notes")
+        .select(
+          "created_at, structured_output, edited_output, flagged_as_incident"
+        )
+        .eq("resident_id", resident.id)
+        .eq("organization_id", appUser.organization_id)
+        .eq("flagged_as_incident", true)
+        .gte("created_at", fourteenDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
+    const recentNotes = (recentNotesRes.data ?? []) as NoteSummaryRow[];
+    const recentIncidents = (recentIncidentsRes.data ?? []) as NoteSummaryRow[];
+    recentNotesSummary = formatRecentNotes(recentNotes);
+    recentIncidentsLine = formatRecentIncidents(recentIncidents);
+  }
 
   // Per-call keyterms boost Deepgram recognition for resident name + meds.
   // Conditions are a free-text comma/space-delimited string today; split and
@@ -316,8 +357,8 @@ export async function POST(request: NextRequest) {
       culturalRegister: residentContext.cultural_register,
       conditions: resident.conditions,
       careNotesContext: resident.care_notes_context,
-      recentNotesSummary: formatRecentNotes(recentNotes),
-      recentIncidents: formatRecentIncidents(recentIncidents),
+      recentNotesSummary,
+      recentIncidents: recentIncidentsLine,
       keyterms,
     }),
     firstMessageMode:

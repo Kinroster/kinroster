@@ -3,9 +3,14 @@ import { inngest } from "@/lib/inngest/client";
 import {
   weeklySummariesCron,
   retryFailedStructuringCron,
+  threadUpdateOnNoteStructured,
 } from "@/lib/inngest/functions";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [weeklySummariesCron, retryFailedStructuringCron],
+  functions: [
+    weeklySummariesCron,
+    retryFailedStructuringCron,
+    threadUpdateOnNoteStructured,
+  ],
 });

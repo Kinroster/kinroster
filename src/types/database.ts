@@ -1843,6 +1843,117 @@ export type Database = {
           },
         ]
       }
+      resident_conversation_threads: {
+        Row: {
+          id: string
+          organization_id: string
+          resident_id: string
+          version: number
+          body: Json
+          approximate_token_count: number
+          last_note_id: string | null
+          last_updated_at: string | null
+          last_compacted_at: string | null
+          last_model_used: string | null
+          update_attempts: number
+          last_update_error: string | null
+          update_giving_up: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          resident_id: string
+          version?: number
+          body?: Json
+          approximate_token_count?: number
+          last_note_id?: string | null
+          last_updated_at?: string | null
+          last_compacted_at?: string | null
+          last_model_used?: string | null
+          update_attempts?: number
+          last_update_error?: string | null
+          update_giving_up?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          resident_id?: string
+          version?: number
+          body?: Json
+          approximate_token_count?: number
+          last_note_id?: string | null
+          last_updated_at?: string | null
+          last_compacted_at?: string | null
+          last_model_used?: string | null
+          update_attempts?: number
+          last_update_error?: string | null
+          update_giving_up?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      resident_conversation_thread_versions: {
+        Row: {
+          id: string
+          thread_id: string
+          organization_id: string
+          resident_id: string
+          version: number
+          body: Json
+          approximate_token_count: number
+          trigger: string
+          triggering_note_id: string | null
+          diff: Json | null
+          model_used: string | null
+          input_tokens: number | null
+          output_tokens: number | null
+          cache_read_input_tokens: number | null
+          cache_creation_input_tokens: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          thread_id: string
+          organization_id: string
+          resident_id: string
+          version: number
+          body: Json
+          approximate_token_count?: number
+          trigger: string
+          triggering_note_id?: string | null
+          diff?: Json | null
+          model_used?: string | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          cache_read_input_tokens?: number | null
+          cache_creation_input_tokens?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          organization_id?: string
+          resident_id?: string
+          version?: number
+          body?: Json
+          approximate_token_count?: number
+          trigger?: string
+          triggering_note_id?: string | null
+          diff?: Json | null
+          model_used?: string | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          cache_read_input_tokens?: number | null
+          cache_creation_input_tokens?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       resident_recording_consents: {
         Row: {
           id: string
@@ -2110,4 +2221,6 @@ export type ResidentPdpaConsent = Database["public"]["Tables"]["resident_pdpa_co
 export type ResidentDecisionalCapacity = Database["public"]["Tables"]["resident_decisional_capacity"]["Row"];
 export type ResidentDecisionalCapacityHistory = Database["public"]["Tables"]["resident_decisional_capacity_history"]["Row"];
 export type ResidentRecordingConsent = Database["public"]["Tables"]["resident_recording_consents"]["Row"];
+export type ResidentConversationThread = Database["public"]["Tables"]["resident_conversation_threads"]["Row"];
+export type ResidentConversationThreadVersion = Database["public"]["Tables"]["resident_conversation_thread_versions"]["Row"];
 
