@@ -26,7 +26,7 @@ describe("NoteInputForm", () => {
 
   it("renders the form with all fields", () => {
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     expect(screen.getByPlaceholderText(/describe what you observed/i)).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("NoteInputForm", () => {
 
   it("shows character counter", () => {
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     expect(screen.getByText("0/2000")).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe("NoteInputForm", () => {
 
   it("disables submit button when input is empty", () => {
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     const submitBtn = screen.getByText("Save Note");
@@ -53,7 +53,7 @@ describe("NoteInputForm", () => {
   it("enables submit button when text is entered", async () => {
     const user = userEvent.setup();
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     const textarea = screen.getByPlaceholderText(/describe what you observed/i);
@@ -66,7 +66,7 @@ describe("NoteInputForm", () => {
   it("updates character counter as user types", async () => {
     const user = userEvent.setup();
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     const textarea = screen.getByPlaceholderText(/describe what you observed/i);
@@ -77,7 +77,7 @@ describe("NoteInputForm", () => {
 
   it("auto-selects shift based on time of day", () => {
     render(
-      <NoteInputForm residentId="resident-1" organizationId="org-1" />
+      <NoteInputForm residentId="resident-1" organizationId="org-1" authorType="caregiver" />
     );
 
     const hour = new Date().getHours();

@@ -26,7 +26,7 @@ async function findSession(
   if (sessionId) {
     const { data } = await supabase
       .from("voice_sessions")
-      .select("id, organization_id, resident_id, caregiver_id")
+      .select("id, organization_id, resident_id, caregiver_id, author_id, author_type")
       .eq("id", sessionId)
       .single();
     return data as {
@@ -34,12 +34,14 @@ async function findSession(
       organization_id: string;
       resident_id: string;
       caregiver_id: string;
+      author_id: string | null;
+      author_type: string | null;
     } | null;
   }
   // Fallback: lookup by vapi_call_id
   const { data } = await supabase
     .from("voice_sessions")
-    .select("id, organization_id, resident_id, caregiver_id")
+    .select("id, organization_id, resident_id, caregiver_id, author_id, author_type")
     .eq("vapi_call_id", event.call.id)
     .single();
   return data as {
@@ -47,6 +49,8 @@ async function findSession(
     organization_id: string;
     resident_id: string;
     caregiver_id: string;
+    author_id: string | null;
+    author_type: string | null;
   } | null;
 }
 
@@ -188,7 +192,16 @@ export async function POST(request: NextRequest) {
       .insert({
         organization_id: session.organization_id,
         resident_id: session.resident_id,
-        author_id: session.caregiver_id,
+        // Phase 2 (00031a): prefer the session's generalized author
+        // columns; legacy sessions created before 00030 carry NULL
+        // there, so fall back to caregiver_id / caregiver default.
+        author_id: session.author_id ?? session.caregiver_id,
+        author_type: (session.author_type as
+          | "caregiver"
+          | "admin"
+          | "clinician"
+          | "family"
+          | null) ?? "caregiver",
         note_type: "shift_note",
         raw_input: transcript,
         shift: shiftFromHour,
