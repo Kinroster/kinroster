@@ -61,6 +61,13 @@ export function buildAssistantOverrides(params: {
   careNotesContext: string | null;
   recentNotesSummary: string;
   recentIncidents: string;
+  /**
+   * Phase 1 follow-up: structured active-concerns list derived from the
+   * resident conversation thread (`resident_conversation_threads.body.active_concerns`).
+   * Empty string when the thread doesn't exist yet — the Vapi prompt
+   * template falls back to recent_notes_summary alone.
+   */
+  activeConcerns?: string;
   keyterms?: string[];
 }) {
   const {
@@ -76,6 +83,7 @@ export function buildAssistantOverrides(params: {
     careNotesContext,
     recentNotesSummary,
     recentIncidents,
+    activeConcerns,
     keyterms,
   } = params;
 
@@ -107,6 +115,9 @@ export function buildAssistantOverrides(params: {
       recent_incidents: recentIncidents
         ? redactPhiText(recentIncidents)
         : "no recent incidents",
+      active_concerns: activeConcerns
+        ? redactPhiText(activeConcerns)
+        : "none on record",
     },
   };
 

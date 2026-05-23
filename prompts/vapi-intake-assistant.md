@@ -1,7 +1,7 @@
 ---
 id: vapi-intake-assistant
-version: 2026-05-02-multilingual-v1
-prior_version: 2026-04-01-english-v3
+version: 2026-05-23-thread-grounding-v1
+prior_version: 2026-05-02-multilingual-v1
 status: active
 runtime: vapi-dashboard
 model: gpt-4o-mini
@@ -18,10 +18,21 @@ variables:
   - care_context
   - recent_notes_summary
   - recent_incidents
+  - active_concerns
 owner: ai-team
 last_reviewed_by: pouya
-last_reviewed_at: 2026-05-02
+last_reviewed_at: 2026-05-23
 ---
+
+# Version 2026-05-23-thread-grounding-v1
+
+**Source change**: `/api/voice/start/route.ts` now derives `recent_notes_summary` and `recent_incidents` from the per-resident rolling **conversation thread** (`resident_conversation_threads.body`) instead of the previous "stitch last 5 notes + 14 days of incidents" pattern. A new `active_concerns` variable is also threaded in, carrying the structured concern list from the thread body. See `prompts/resident-conversation-thread-updater.md` for the upstream prompt that produces the thread.
+
+**Vapi-dashboard impact**: NONE — the variable NAMES `recent_notes_summary` and `recent_incidents` are reused. The dashboard prompt template only needs the new optional `{{active_concerns}}` interpolation; the existing template still renders correctly with the old two variables alone if the dashboard hasn't been updated yet.
+
+**Behavioural delta**: the assistant's grounding context is now coherent across shifts (it carries a narrative trajectory + active concerns + trends), instead of being a flat list of recent summaries. Caregivers should notice fewer "wait, didn't I tell you yesterday?" moments.
+
+
 
 # Purpose
 

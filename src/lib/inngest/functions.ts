@@ -2,6 +2,7 @@ import { inngest } from "./client";
 import { runWeeklySummaries } from "@/lib/jobs/weekly-summaries";
 import { runRetryFailedStructuring } from "@/lib/jobs/retry-failed-structuring";
 import { updateThreadFromStructuredNote } from "@/lib/services/thread-update";
+import { compactThread } from "@/lib/services/thread-compact";
 
 // Hourly trigger. The job itself filters per-org for "Sunday 6 PM in this
 // org's local time", so each timezone gets its summary once a week without
@@ -56,8 +57,8 @@ export const threadUpdateOnNoteStructured = inngest.createFunction(
     ],
     retries: 3,
   },
-  async ({ event }: { event: { data?: Record<string, unknown> } }) => {
-    const data = event.data as
+  async ({ event, step }) => {
+    const data = (event as { data?: Record<string, unknown> }).data as
       | { noteId?: string; residentId?: string; organizationId?: string }
       | undefined;
     if (!data?.noteId || !data?.residentId || !data?.organizationId) {
@@ -73,6 +74,81 @@ export const threadUpdateOnNoteStructured = inngest.createFunction(
     if (!result.success && result.retryable) {
       throw new Error(
         `thread update failed (retryable): ${result.error ?? "unknown"}`
+      );
+    }
+    // When the updated body crosses the compaction threshold, emit a
+    // sibling event. The compaction function shares the same
+    // per-resident concurrency key, so it queues behind any further
+    // updates for this resident (and the next update can't race
+    // ahead of compaction).
+    if (
+      result.success &&
+      result.approximateTokenCount &&
+      result.approximateTokenCount > 3000
+    ) {
+      await step.sendEvent("queue-compaction", {
+        name: "thread/compaction-requested",
+        data: {
+          residentId: data.residentId,
+          organizationId: data.organizationId,
+        },
+      });
+    }
+    return result;
+  }
+);
+
+/**
+ * Phase 1 follow-up: thread compaction.
+ *
+ * Triggered by `thread/compaction-requested` whenever a thread update
+ * crosses the 3000 approximate-token threshold. Same per-resident
+ * concurrency=1 as the updater — both functions share the residentId
+ * key so compaction queues behind any in-flight or queued update.
+ *
+ * Anti-loop guard lives in the service: it skips with `cooldown` if
+ * last_compacted_at < 6h ago. Retries are kept low (1) because a
+ * failed compaction doesn't break voice/start — the larger body keeps
+ * working; the next note's compaction trigger will retry naturally.
+ */
+export const threadCompactionRequested = inngest.createFunction(
+  {
+    id: "thread-compaction-requested",
+    name: "Compact resident conversation thread",
+    triggers: [{ event: "thread/compaction-requested" }],
+    concurrency: [
+      { key: "event.data.residentId", limit: 1 },
+      { limit: 20 },
+    ],
+    retries: 1,
+  },
+  async ({ event }) => {
+    const data = (event as { data?: Record<string, unknown> }).data as
+      | { residentId?: string; organizationId?: string }
+      | undefined;
+    if (!data?.residentId || !data?.organizationId) {
+      return { skipped: "invalid_event_data" };
+    }
+    // Look up the thread for this resident — the compaction event
+    // doesn't carry threadId because compaction is per-resident, and
+    // there's exactly one thread per resident (UNIQUE constraint).
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data: threadRow } = await admin
+      .from("resident_conversation_threads")
+      .select("id")
+      .eq("resident_id", data.residentId)
+      .maybeSingle();
+    if (!threadRow) return { skipped: "no_thread" };
+
+    const result = await compactThread({
+      threadId: (threadRow as { id: string }).id,
+      residentId: data.residentId,
+      organizationId: data.organizationId,
+    });
+    if (!result.success && result.retryable) {
+      throw new Error(
+        `thread compaction failed (retryable): ${result.error ?? "unknown"}`
       );
     }
     return result;

@@ -4,6 +4,7 @@ import {
   weeklySummariesCron,
   retryFailedStructuringCron,
   threadUpdateOnNoteStructured,
+  threadCompactionRequested,
 } from "@/lib/inngest/functions";
 
 export const { GET, POST, PUT } = serve({
@@ -12,5 +13,6 @@ export const { GET, POST, PUT } = serve({
     weeklySummariesCron,
     retryFailedStructuringCron,
     threadUpdateOnNoteStructured,
+    threadCompactionRequested,
   ],
 });
