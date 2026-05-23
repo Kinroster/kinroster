@@ -38,7 +38,10 @@ export type AuditEventType =
   | "family_contact_confirmed"
   | "capacity_assessment_create"
   | "capacity_assessment_update"
-  | "capacity_assessment_delete";
+  | "capacity_assessment_delete"
+  | "recording_consent_capture"
+  | "recording_consent_withdraw"
+  | "recording_consent_blocked";
 
 export type AuditResult = "success" | "denied" | "error";
 
@@ -53,7 +56,8 @@ export type AuditObjectType =
   | "authorization"
   | "pdpa_consent"
   | "incident_report"
-  | "capacity_assessment";
+  | "capacity_assessment"
+  | "recording_consent";
 
 interface LogAuditParams {
   organizationId: string;
