@@ -6,8 +6,8 @@
 |---|---|---|---|---|
 | **0a** Decisional capacity | ✅ Shipped 2026-05-22 | `claude/pr-66-implementation-95X9H` | 00028 | Table + history + snapshot trigger; admin UI at `/residents/[id]/capacity`; status banner on resident detail; audit event types added |
 | **0b** Recording consent | ✅ Shipped 2026-05-22 | `claude/pr-66-implementation-95X9H` | 00029 | `resident_recording_consents` (3 classes × 13 jurisdictions); provisional multi-jurisdiction text templates (CIPA, BIPA, GDPR, PDPA); admin UI at `/residents/[id]/recording-consent`; hard-gate on `/api/voice/start` (no_consent + jurisdiction_mismatch both blocked + audited); resident detail banner |
-| **0.5** Prompt caching migration | ⏳ Next | — | none | Extend `claude.ts` w/ `userPromptCachedPrefix`; migrate 11 call sites; Batch API for weekly summaries |
-| **1** Rolling caregiver thread | ⏳ | — | 00030 | Inngest CAS + per-resident concurrency; thread fetch replaces last-5-notes stitching |
+| **0.5** Prompt caching migration | 🟡 Core shipped 2026-05-22 | `claude/pr-66-implementation-95X9H` | none | `claude.ts` extended w/ `userPromptCachedPrefix` + `cacheTtl` + `callClaudeWithUsage` (returns cache_read / cache_creation telemetry). Shift-note prompt split into cached resident prefix + volatile tail, structure-note migrated w/ 1h TTL + token telemetry persisted to `notes.metadata.tokens_used`. **Deferred**: per-resident systemPromptSuffix on the 4 other Sonnet sites (family-update, clinician-share, weekly-summaries, residents/summary), weekly-summaries → Batch API, incident-report Haiku swap golden-test, per-org cache-read-ratio dashboard |
+| **1** Rolling caregiver thread | ⏳ Next | — | 00030 | Inngest CAS + per-resident concurrency; thread fetch replaces last-5-notes stitching |
 | **2** Author generalization | ⏳ | — | 00031a + 00031b | Two-deploy rename; `is_staff()` helper |
 | **3** Clinician accounts | ⏳ | — | 00032 | NPPES NPI lookup + admin attestation; Vapi clinician spec |
 | **5** Two-way questions loop | ⏳ | — | none | After Phase 3 so the questions UI is wired into the clinician portal first |
@@ -512,7 +512,7 @@ Rationale: capacity (0a) is a pure admin-data shipping (~1 day); recording conse
 |---|---|---|---|---|---|
 | **0a** | Decisional capacity | 1–2 | 00028 | capacity-form, residents detail | ✅ Shipped |
 | **0b** | Recording consent | 3–5 | 00029 | recording-consent-form, voice/start gate | ✅ Shipped |
-| **0.5** | Prompt caching migration | 3–4 | none | claude.ts, structure-note, weekly-summaries, 9 other sites | ⏳ |
+| **0.5** | Prompt caching migration | 3–4 | none | claude.ts, structure-note, weekly-summaries, 9 other sites | 🟡 Core shipped (deferred: other sites + Batch + Haiku) |
 | **1** | Rolling caregiver thread | 7–10 | 00030 | thread-update job, structure-note event, voice/start, AI thread component | ⏳ |
 | **2** | Author generalization | 3–4 | 00031a + 00031b | voice_sessions/notes columns, is_staff() helper | ⏳ |
 | **3** | Clinician accounts | 10–12 | 00032 | NPI client, clinician portal, vapi-clinician spec | ⏳ |
