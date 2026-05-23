@@ -15,11 +15,11 @@
 //     it once attempts >= MAX_ATTEMPTS.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { callClaude, parseJsonResponse } from "@/lib/claude";
+import { callClaudeWithUsage, parseJsonResponse } from "@/lib/claude";
 import { redactPhiText } from "@/lib/redaction";
 import {
   SHIFT_NOTE_SYSTEM_PROMPT,
-  buildShiftNoteUserPrompt,
+  buildShiftNoteUserPromptParts,
   type StructuredNoteOutput,
 } from "@/lib/prompts/shift-note";
 import type { ResidentLocaleContext } from "@/lib/i18n/locale";
@@ -149,25 +149,34 @@ export async function structureNote(
     .eq("id", note.author_id)
     .single();
 
-  // 4. Call Claude, parse, persist on success.
+  // 4. Call Claude, parse, persist on success. The user prompt is split
+  // into a cached per-resident prefix (name + context + conditions +
+  // cultural register) and a volatile tail (timestamp + caregiver + raw
+  // input). With cacheTtl: '1h', the cached prefix amortizes the cache-
+  // write cost across every note a caregiver dictates about this
+  // resident in a shift — typically 3-8 calls per shift per resident.
   try {
-    const raw = await callClaude({
+    const { cachedPrefix, volatileTail } = buildShiftNoteUserPromptParts({
+      residentFirstName: resident.first_name,
+      residentLastName: resident.last_name,
+      careNotesContext: resident.care_notes_context
+        ? redactPhiText(resident.care_notes_context)
+        : null,
+      conditions: resident.conditions
+        ? redactPhiText(resident.conditions)
+        : null,
+      timestamp: note.created_at,
+      caregiverName:
+        (author as { full_name: string } | null)?.full_name || "Unknown",
+      rawInput: redactPhiText(note.raw_input),
+      localeContext: options.localeContext ?? undefined,
+    });
+
+    const { text: raw, usage } = await callClaudeWithUsage({
       systemPrompt: SHIFT_NOTE_SYSTEM_PROMPT,
-      userPrompt: buildShiftNoteUserPrompt({
-        residentFirstName: resident.first_name,
-        residentLastName: resident.last_name,
-        careNotesContext: resident.care_notes_context
-          ? redactPhiText(resident.care_notes_context)
-          : null,
-        conditions: resident.conditions
-          ? redactPhiText(resident.conditions)
-          : null,
-        timestamp: note.created_at,
-        caregiverName:
-          (author as { full_name: string } | null)?.full_name || "Unknown",
-        rawInput: redactPhiText(note.raw_input),
-        localeContext: options.localeContext ?? undefined,
-      }),
+      userPromptCachedPrefix: cachedPrefix,
+      userPrompt: volatileTail,
+      cacheTtl: "1h",
     });
 
     const structured = parseJsonResponse<StructuredNoteOutput>(raw);
@@ -180,7 +189,12 @@ export async function structureNote(
       flags: structured.flags || [],
       ai_classification: hasFlags ? "possible_incident" : "routine",
       model_used: "claude-sonnet-4-6",
-      tokens_used: { input: 0, output: 0 },
+      tokens_used: {
+        input: usage.input_tokens,
+        output: usage.output_tokens,
+        cache_read: usage.cache_read_input_tokens,
+        cache_creation: usage.cache_creation_input_tokens,
+      },
       structured_output_version: "v2",
     };
 

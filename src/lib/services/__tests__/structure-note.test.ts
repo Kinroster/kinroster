@@ -10,11 +10,19 @@ vi.mock("@/lib/claude", async () => {
   return {
     ...actual,
     callClaude: vi.fn(),
+    callClaudeWithUsage: vi.fn(),
   };
 });
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { callClaude } from "@/lib/claude";
+import { callClaude, callClaudeWithUsage } from "@/lib/claude";
+
+const EMPTY_USAGE = {
+  input_tokens: 0,
+  output_tokens: 0,
+  cache_read_input_tokens: 0,
+  cache_creation_input_tokens: 0,
+};
 import {
   structureNote,
   MAX_STRUCTURING_ATTEMPTS,
@@ -126,11 +134,15 @@ function makeNote(overrides: Partial<NoteFixture> = {}): NoteFixture {
 describe("structureNote", () => {
   beforeEach(() => {
     vi.mocked(callClaude).mockReset();
+    vi.mocked(callClaudeWithUsage).mockReset();
   });
 
   it("success path: parses, persists, returns structured", async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    vi.mocked(callClaude).mockResolvedValue(VALID_STRUCTURED_OUTPUT);
+    vi.mocked(callClaudeWithUsage).mockResolvedValue({
+      text: VALID_STRUCTURED_OUTPUT,
+      usage: EMPTY_USAGE,
+    });
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
@@ -149,7 +161,10 @@ describe("structureNote", () => {
 
   it("merges extraMetadata into final metadata on success", async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    vi.mocked(callClaude).mockResolvedValue(VALID_STRUCTURED_OUTPUT);
+    vi.mocked(callClaudeWithUsage).mockResolvedValue({
+      text: VALID_STRUCTURED_OUTPUT,
+      usage: EMPTY_USAGE,
+    });
 
     await structureNote(fakeSupabase(state), "note-1", {
       extraMetadata: { source: "voice_call", voice_session_id: "v-9" },
@@ -165,7 +180,7 @@ describe("structureNote", () => {
     const state: FakeState = { note: makeNote(), updates: [] };
     const err = new Error("rate limit") as Error & { status?: number };
     err.status = 429;
-    vi.mocked(callClaude).mockRejectedValue(err);
+    vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
@@ -182,7 +197,10 @@ describe("structureNote", () => {
 
   it("non-retryable failure (parse error) flips giving_up immediately", async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    vi.mocked(callClaude).mockResolvedValue("not json at all");
+    vi.mocked(callClaudeWithUsage).mockResolvedValue({
+      text: "not json at all",
+      usage: EMPTY_USAGE,
+    });
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
@@ -198,7 +216,7 @@ describe("structureNote", () => {
     const state: FakeState = { note: makeNote(), updates: [] };
     const err = new Error("bad request") as Error & { status?: number };
     err.status = 400;
-    vi.mocked(callClaude).mockRejectedValue(err);
+    vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
@@ -213,7 +231,7 @@ describe("structureNote", () => {
     };
     const err = new Error("rate limit") as Error & { status?: number };
     err.status = 429;
-    vi.mocked(callClaude).mockRejectedValue(err);
+    vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
@@ -225,7 +243,7 @@ describe("structureNote", () => {
 
   it("network/timeout errors with no status are treated as retryable", async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    vi.mocked(callClaude).mockRejectedValue(new Error("fetch failed"));
+    vi.mocked(callClaudeWithUsage).mockRejectedValue(new Error("fetch failed"));
 
     const result = await structureNote(fakeSupabase(state), "note-1");
 
