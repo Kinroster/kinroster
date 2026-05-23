@@ -10,6 +10,11 @@ import {
   hasCaregiverPdpaConsent,
   pdpaConsentRequired,
 } from "@/lib/pdpa/active-consent";
+import {
+  checkRecordingConsent,
+  resolveExpectedJurisdiction,
+  type RegulatoryRegion,
+} from "@/lib/recording-consent/active-consent";
 
 interface NoteSummaryRow {
   created_at: string;
@@ -121,15 +126,72 @@ export async function POST(request: NextRequest) {
   // organizations.settings.pdpa_consent_required = true flips it on.
   const { data: orgSettingsRow } = await supabase
     .from("organizations")
-    .select("settings")
+    .select("settings, regulatory_region")
     .eq("id", appUser.organization_id)
     .single();
-  if (
-    pdpaConsentRequired(
-      (orgSettingsRow as { settings: Record<string, unknown> | null } | null)
-        ?.settings
-    )
-  ) {
+  const typedOrgSettings = orgSettingsRow as
+    | {
+        settings: Record<string, unknown> | null;
+        regulatory_region: string;
+      }
+    | null;
+
+  // Phase 0b gate: per-resident recording consent must exist in the
+  // 'staff_dictation' class AND match the org's expected jurisdiction.
+  // Hard-block. The voice/start path is the highest-stakes recording
+  // surface in the app — caregivers + admins dictate observations that
+  // contain the resident's PHI. CIPA / BIPA / GDPR Art. 9 / Taiwan PDPA
+  // Art. 7 all require specific, jurisdiction-appropriate consent
+  // before that recording occurs. Mismatch (e.g., consent captured
+  // under CA but org is now in WA) blocks until re-capture.
+  const region: RegulatoryRegion =
+    (typedOrgSettings?.regulatory_region as RegulatoryRegion) ?? "hipaa_us";
+  const expectedJurisdiction = resolveExpectedJurisdiction(
+    region,
+    typedOrgSettings?.settings ?? null
+  );
+  const recordingCheck = await checkRecordingConsent(
+    supabase,
+    resident.id,
+    "staff_dictation",
+    expectedJurisdiction
+  );
+  if (!recordingCheck.allowed) {
+    await logAudit({
+      organizationId: appUser.organization_id,
+      userId: appUser.id,
+      eventType: "recording_consent_blocked",
+      objectType: "resident",
+      objectId: resident.id,
+      result: "denied",
+      request,
+      metadata: {
+        code: recordingCheck.code,
+        expected_jurisdiction: recordingCheck.expectedJurisdiction,
+        actual_jurisdiction:
+          "actualJurisdiction" in recordingCheck
+            ? recordingCheck.actualJurisdiction
+            : null,
+      },
+    });
+    return NextResponse.json(
+      {
+        error:
+          recordingCheck.code === "no_consent"
+            ? "Voice recording consent missing. An admin must capture staff_dictation consent for this resident before voice intake can be used."
+            : "Voice recording consent jurisdiction mismatch. The active consent's jurisdiction does not match the organization's expected jurisdiction; an admin must re-capture under the correct jurisdiction.",
+        code: recordingCheck.code,
+        expected_jurisdiction: recordingCheck.expectedJurisdiction,
+        actual_jurisdiction:
+          "actualJurisdiction" in recordingCheck
+            ? recordingCheck.actualJurisdiction
+            : undefined,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (pdpaConsentRequired(typedOrgSettings?.settings)) {
     const [residentOk, caregiverOk] = await Promise.all([
       hasActivePdpaConsent(supabase, resident.id),
       hasCaregiverPdpaConsent(supabase, appUser.id),

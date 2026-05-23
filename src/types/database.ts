@@ -1843,6 +1843,107 @@ export type Database = {
           },
         ]
       }
+      resident_recording_consents: {
+        Row: {
+          id: string
+          organization_id: string
+          resident_id: string
+          consent_class: string
+          jurisdiction: string
+          consenting_party_type: string
+          consenting_party_name: string
+          consenting_party_relationship: string | null
+          consent_text_version: string
+          consent_text_locale: string
+          consent_text_snapshot: string
+          attorney_reviewed: boolean
+          signed_typed_name: string
+          consented_at: string
+          captured_by_user_id: string
+          ip_address: string | null
+          user_agent: string | null
+          withdrawn_at: string | null
+          withdrawn_by_user_id: string | null
+          withdrawal_reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          resident_id: string
+          consent_class: string
+          jurisdiction: string
+          consenting_party_type: string
+          consenting_party_name: string
+          consenting_party_relationship?: string | null
+          consent_text_version: string
+          consent_text_locale: string
+          consent_text_snapshot: string
+          attorney_reviewed?: boolean
+          signed_typed_name: string
+          consented_at?: string
+          captured_by_user_id: string
+          ip_address?: string | null
+          user_agent?: string | null
+          withdrawn_at?: string | null
+          withdrawn_by_user_id?: string | null
+          withdrawal_reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          resident_id?: string
+          consent_class?: string
+          jurisdiction?: string
+          consenting_party_type?: string
+          consenting_party_name?: string
+          consenting_party_relationship?: string | null
+          consent_text_version?: string
+          consent_text_locale?: string
+          consent_text_snapshot?: string
+          attorney_reviewed?: boolean
+          signed_typed_name?: string
+          consented_at?: string
+          captured_by_user_id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          withdrawn_at?: string | null
+          withdrawn_by_user_id?: string | null
+          withdrawal_reason?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_recording_consents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_recording_consents_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_recording_consents_captured_by_user_id_fkey"
+            columns: ["captured_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_recording_consents_withdrawn_by_user_id_fkey"
+            columns: ["withdrawn_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2008,4 +2109,5 @@ export type VoiceTranscript = Database["public"]["Tables"]["voice_transcripts"][
 export type ResidentPdpaConsent = Database["public"]["Tables"]["resident_pdpa_consents"]["Row"];
 export type ResidentDecisionalCapacity = Database["public"]["Tables"]["resident_decisional_capacity"]["Row"];
 export type ResidentDecisionalCapacityHistory = Database["public"]["Tables"]["resident_decisional_capacity_history"]["Row"];
+export type ResidentRecordingConsent = Database["public"]["Tables"]["resident_recording_consents"]["Row"];
 
