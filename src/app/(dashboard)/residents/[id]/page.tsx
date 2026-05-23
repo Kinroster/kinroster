@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Mail } from "lucide-react";
+import { Pencil, Mail, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import { NoteTimeline } from "@/components/notes/note-timeline";
 import { NotesInfiniteList } from "@/components/notes/notes-infinite-list";
 import { NoteFilters } from "@/components/notes/note-filters";
@@ -130,6 +130,17 @@ export default async function ResidentDetailPage({
 
   const clinicianDirectory = (directoryData ?? []) as DirectoryClinician[];
 
+  const { data: capacityData } = await supabase
+    .from("resident_decisional_capacity")
+    .select("capacity_status, representative_name, representative_relationship")
+    .eq("resident_id", id)
+    .maybeSingle();
+  const capacity = capacityData as {
+    capacity_status: string;
+    representative_name: string | null;
+    representative_relationship: string | null;
+  } | null;
+
   const isDeletedPending = resident.status === "deleted_pending";
   const residentDisplayName = `${resident.first_name} ${resident.last_name}`;
 
@@ -196,6 +207,57 @@ export default async function ResidentDetailPage({
           </div>
         )}
       </div>
+
+      {/* Decisional capacity */}
+      {isAdmin && (
+        <div className="mb-4 rounded-xl border bg-card p-3 text-sm flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="font-medium flex items-center gap-1.5">
+              {capacity?.capacity_status === "full" ? (
+                <>
+                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                  Full capacity
+                </>
+              ) : capacity?.capacity_status ===
+                "diminished_with_representative" ? (
+                <>
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  Diminished — representative on file
+                </>
+              ) : capacity?.capacity_status === "lacks_capacity" ? (
+                <>
+                  <ShieldX className="h-4 w-4 text-destructive" />
+                  Lacks capacity
+                </>
+              ) : (
+                <>
+                  <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                  Capacity not assessed
+                </>
+              )}
+            </div>
+            {capacity?.representative_name && (
+              <p className="text-xs text-muted-foreground">
+                Representative: {capacity.representative_name}
+                {capacity.representative_relationship
+                  ? ` · ${capacity.representative_relationship}`
+                  : ""}
+              </p>
+            )}
+            {!capacity && (
+              <p className="text-xs text-muted-foreground">
+                Capture the resident&apos;s decisional capacity before
+                recording any voice content or capturing consent.
+              </p>
+            )}
+          </div>
+          <Link href={`/residents/${id}/capacity`}>
+            <Button variant="outline" size="sm">
+              {capacity ? "Manage" : "Assess"}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Conditions & Preferences */}
       {(resident.conditions || resident.preferences) && (

@@ -1676,6 +1676,173 @@ export type Database = {
           },
         ]
       }
+      resident_decisional_capacity: {
+        Row: {
+          id: string
+          organization_id: string
+          resident_id: string
+          capacity_status: string
+          representative_name: string | null
+          representative_relationship: string | null
+          authority_basis: string | null
+          documentation_uri: string | null
+          notes: string | null
+          assessed_by_user_id: string
+          assessed_at: string
+          next_review_due_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          resident_id: string
+          capacity_status: string
+          representative_name?: string | null
+          representative_relationship?: string | null
+          authority_basis?: string | null
+          documentation_uri?: string | null
+          notes?: string | null
+          assessed_by_user_id: string
+          assessed_at?: string
+          next_review_due_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          resident_id?: string
+          capacity_status?: string
+          representative_name?: string | null
+          representative_relationship?: string | null
+          authority_basis?: string | null
+          documentation_uri?: string | null
+          notes?: string | null
+          assessed_by_user_id?: string
+          assessed_at?: string
+          next_review_due_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_decisional_capacity_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_decisional_capacity_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: true
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_decisional_capacity_assessed_by_user_id_fkey"
+            columns: ["assessed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resident_decisional_capacity_history: {
+        Row: {
+          id: string
+          capacity_id: string
+          organization_id: string
+          resident_id: string
+          prior_capacity_status: string | null
+          new_capacity_status: string
+          prior_representative_name: string | null
+          new_representative_name: string | null
+          prior_representative_relationship: string | null
+          new_representative_relationship: string | null
+          prior_authority_basis: string | null
+          new_authority_basis: string | null
+          prior_documentation_uri: string | null
+          new_documentation_uri: string | null
+          prior_notes: string | null
+          new_notes: string | null
+          prior_next_review_due_at: string | null
+          new_next_review_due_at: string | null
+          change_op: string
+          changed_by_user_id: string | null
+          changed_at: string
+        }
+        Insert: {
+          id?: string
+          capacity_id: string
+          organization_id: string
+          resident_id: string
+          prior_capacity_status?: string | null
+          new_capacity_status: string
+          prior_representative_name?: string | null
+          new_representative_name?: string | null
+          prior_representative_relationship?: string | null
+          new_representative_relationship?: string | null
+          prior_authority_basis?: string | null
+          new_authority_basis?: string | null
+          prior_documentation_uri?: string | null
+          new_documentation_uri?: string | null
+          prior_notes?: string | null
+          new_notes?: string | null
+          prior_next_review_due_at?: string | null
+          new_next_review_due_at?: string | null
+          change_op: string
+          changed_by_user_id?: string | null
+          changed_at?: string
+        }
+        Update: {
+          id?: string
+          capacity_id?: string
+          organization_id?: string
+          resident_id?: string
+          prior_capacity_status?: string | null
+          new_capacity_status?: string
+          prior_representative_name?: string | null
+          new_representative_name?: string | null
+          prior_representative_relationship?: string | null
+          new_representative_relationship?: string | null
+          prior_authority_basis?: string | null
+          new_authority_basis?: string | null
+          prior_documentation_uri?: string | null
+          new_documentation_uri?: string | null
+          prior_notes?: string | null
+          new_notes?: string | null
+          prior_next_review_due_at?: string | null
+          new_next_review_due_at?: string | null
+          change_op?: string
+          changed_by_user_id?: string | null
+          changed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_decisional_capacity_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_decisional_capacity_history_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_decisional_capacity_history_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1839,4 +2006,6 @@ export type WeeklySummary = Database["public"]["Tables"]["weekly_summaries"]["Ro
 export type VoiceSession = Database["public"]["Tables"]["voice_sessions"]["Row"];
 export type VoiceTranscript = Database["public"]["Tables"]["voice_transcripts"]["Row"];
 export type ResidentPdpaConsent = Database["public"]["Tables"]["resident_pdpa_consents"]["Row"];
+export type ResidentDecisionalCapacity = Database["public"]["Tables"]["resident_decisional_capacity"]["Row"];
+export type ResidentDecisionalCapacityHistory = Database["public"]["Tables"]["resident_decisional_capacity_history"]["Row"];
 

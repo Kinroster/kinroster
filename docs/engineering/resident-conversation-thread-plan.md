@@ -1,5 +1,19 @@
 # Unified Resident Conversation Thread — Implementation Plan
 
+## Progress
+
+| Phase | Status | Branch / PR | Migration | Notes |
+|---|---|---|---|---|
+| **0a** Decisional capacity | ✅ Shipped 2026-05-22 | `claude/pr-66-implementation-95X9H` | 00028 | Table + history + snapshot trigger; admin UI at `/residents/[id]/capacity`; status banner on resident detail; audit event types added |
+| **0b** Recording consent | ⏳ Next | — | 00029 | Depends on 0a; attorney text + jurisdiction gate on voice/start |
+| **0.5** Prompt caching migration | ⏳ | — | none | Extend `claude.ts` w/ `userPromptCachedPrefix`; migrate 11 call sites; Batch API for weekly summaries |
+| **1** Rolling caregiver thread | ⏳ | — | 00030 | Inngest CAS + per-resident concurrency; thread fetch replaces last-5-notes stitching |
+| **2** Author generalization | ⏳ | — | 00031a + 00031b | Two-deploy rename; `is_staff()` helper |
+| **3** Clinician accounts | ⏳ | — | 00032 | NPPES NPI lookup + admin attestation; Vapi clinician spec |
+| **5** Two-way questions loop | ⏳ | — | none | After Phase 3 so the questions UI is wired into the clinician portal first |
+| **4** Family accounts + async voice | ⏳ | — | 00033 | SMS OTP; admin moderation gate before Whisper |
+| **6** Resident self-view | (Deferred) | — | — | Out of scope for this work |
+
 ## Context
 
 Kinroster's current voice intake feels forgetful: each Vapi call starts fresh, the AI asks the same questions across shifts, and the same is true across the four parties around the resident (caregiver, admin, family, external clinician). The user asked whether the right answer is per-call summary grounding, full transcript context, or proper conversation threading — and whether family members and external clinicians could also record their voices so all conversations about one resident converge into one thread.
@@ -494,16 +508,16 @@ Rationale: capacity (0a) is a pure admin-data shipping (~1 day); recording conse
 
 ## Final phase order recap
 
-| # | Phase | Days | Migration | Major files |
-|---|---|---|---|---|
-| **0a** | Decisional capacity | 1–2 | 00028 | capacity-form, residents detail |
-| **0b** | Recording consent | 3–5 | 00029 | recording-consent-form, voice/start gate |
-| **0.5** | Prompt caching migration | 3–4 | none | claude.ts, structure-note, weekly-summaries, 9 other sites |
-| **1** | Rolling caregiver thread | 7–10 | 00030 | thread-update job, structure-note event, voice/start, AI thread component |
-| **2** | Author generalization | 3–4 | 00031a + 00031b | voice_sessions/notes columns, is_staff() helper |
-| **3** | Clinician accounts | 10–12 | 00032 | NPI client, clinician portal, vapi-clinician spec |
-| **5** | Two-way questions loop | 5–7 | none | thread-updater prompt v2, question status UI |
-| **4** | Family accounts + async voice | 10–14 | 00033 | SMS-OTP, family portal, family memo + moderation |
-| 6 | (Deferred) Resident self-view | — | — | — |
+| # | Phase | Days | Migration | Major files | Status |
+|---|---|---|---|---|---|
+| **0a** | Decisional capacity | 1–2 | 00028 | capacity-form, residents detail | ✅ Shipped |
+| **0b** | Recording consent | 3–5 | 00029 | recording-consent-form, voice/start gate | ⏳ |
+| **0.5** | Prompt caching migration | 3–4 | none | claude.ts, structure-note, weekly-summaries, 9 other sites | ⏳ |
+| **1** | Rolling caregiver thread | 7–10 | 00030 | thread-update job, structure-note event, voice/start, AI thread component | ⏳ |
+| **2** | Author generalization | 3–4 | 00031a + 00031b | voice_sessions/notes columns, is_staff() helper | ⏳ |
+| **3** | Clinician accounts | 10–12 | 00032 | NPI client, clinician portal, vapi-clinician spec | ⏳ |
+| **5** | Two-way questions loop | 5–7 | none | thread-updater prompt v2, question status UI | ⏳ |
+| **4** | Family accounts + async voice | 10–14 | 00033 | SMS-OTP, family portal, family memo + moderation | ⏳ |
+| 6 | (Deferred) Resident self-view | — | — | — | — |
 
 **Total**: ~43–61 days of focused engineering. Phase 0 + Phase 0.5 + Phase 1 + Phase 2 is the minimum-viable thread (15–23 days) that ships internal value without external user onboarding.
