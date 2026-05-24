@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Mic, MicOff, ShieldAlert } from "lucide-react";
+import { LocalDate } from "@/components/ui/local-date";
 import type { ResidentRecordingConsent } from "@/types/database";
 import {
   CONSENT_CLASS_LABELS,
@@ -431,7 +432,7 @@ export function RecordingConsentManager({
                       : `(personal rep · ${c.consenting_party_relationship ?? "—"})`}
                   </p>
                   <p className="text-muted-foreground">
-                    Captured {new Date(c.consented_at).toLocaleString()} ·
+                    Captured <LocalDate value={c.consented_at} /> ·
                     version <code>{c.consent_text_version}</code> ·{" "}
                     {c.consent_text_locale}
                     {!c.attorney_reviewed && (
@@ -440,7 +441,7 @@ export function RecordingConsentManager({
                   </p>
                   {c.withdrawn_at && (
                     <p className="text-destructive">
-                      Withdrawn {new Date(c.withdrawn_at).toLocaleString()}{" "}
+                      Withdrawn <LocalDate value={c.withdrawn_at} />{" "}
                       — {c.withdrawal_reason}
                     </p>
                   )}

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { LocalDate } from "@/components/ui/local-date";
 import type {
   ResidentDecisionalCapacity,
   ResidentDecisionalCapacityHistory,
@@ -197,7 +198,7 @@ export function CapacityForm({
             <span className="text-muted-foreground">Resident</span>
             <span>{residentName}</span>
             <span className="text-muted-foreground">Last assessed</span>
-            <span>{new Date(current.assessed_at).toLocaleString()}</span>
+            <span><LocalDate value={current.assessed_at} /></span>
             {current.representative_name && (
               <>
                 <span className="text-muted-foreground">Representative</span>
@@ -223,7 +224,10 @@ export function CapacityForm({
               <>
                 <span className="text-muted-foreground">Next review</span>
                 <span>
-                  {new Date(current.next_review_due_at).toLocaleDateString()}
+                  <LocalDate
+                    value={current.next_review_due_at}
+                    variant="date"
+                  />
                 </span>
               </>
             )}
@@ -376,7 +380,7 @@ export function CapacityForm({
                     {h.change_op}
                   </span>
                   <span className="text-muted-foreground">
-                    {new Date(h.changed_at).toLocaleString()}
+                    <LocalDate value={h.changed_at} />
                   </span>
                 </div>
                 <div className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-muted-foreground">
