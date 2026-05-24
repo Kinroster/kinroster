@@ -561,6 +561,30 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_signups: {
+        Row: {
+          id: string
+          email: string
+          marketing_opt_in: boolean
+          source: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          marketing_opt_in?: boolean
+          source?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          marketing_opt_in?: boolean
+          source?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       residents: {
         Row: {
           care_notes_context: string | null

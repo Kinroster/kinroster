@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { OrganizationJsonLd } from "@/components/seo/organization-jsonld";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -103,6 +104,7 @@ export default async function RootLayout({
             {children}
             <InstallPrompt />
             <Toaster />
+            <Analytics />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

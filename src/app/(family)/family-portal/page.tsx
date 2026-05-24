@@ -35,10 +35,10 @@ export default async function FamilyDashboardPage() {
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
-  if (!authUser) redirect("/family/verify");
+  if (!authUser) redirect("/family-portal/verify");
 
-  // Lock the surface to role='family' — staff users hitting /family by
-  // mistake should land on the admin dashboard instead.
+  // Lock the surface to role='family' — staff users hitting /family-portal
+  // by mistake should land on the admin dashboard instead.
   const { data: appUser } = await supabase
     .from("users")
     .select("role")
@@ -119,7 +119,7 @@ export default async function FamilyDashboardPage() {
                     You are listed as: {contact.relationship}
                   </p>
                 </div>
-                <Link href={`/family/residents/${resident.id}`}>
+                <Link href={`/family-portal/residents/${resident.id}`}>
                   <Button size="sm" variant="outline">
                     Open
                   </Button>
