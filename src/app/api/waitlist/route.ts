@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
   const { email, marketingOptIn, source } = parsed.data;
   const supabase = createAdminClient();
 
-  // @ts-expect-error — waitlist_signups not in generated types until migration runs + gen types
   const { error } = await supabase.from("waitlist_signups").insert({
     email,
     marketing_opt_in: marketingOptIn,

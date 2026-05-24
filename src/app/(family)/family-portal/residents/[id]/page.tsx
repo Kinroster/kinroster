@@ -59,7 +59,7 @@ export default async function FamilyResidentPage({
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
-  if (!authUser) redirect("/family/verify");
+  if (!authUser) redirect("/family-portal/verify");
 
   // Verify the family user is linked to this resident.
   const { data: linkRow } = await supabase
@@ -114,7 +114,7 @@ export default async function FamilyResidentPage({
   return (
     <div className="space-y-5">
       <Link
-        href="/family"
+        href="/family-portal"
         className="text-xs text-muted-foreground inline-flex items-center gap-1"
       >
         <ChevronLeft className="h-3 w-3" />
@@ -212,7 +212,7 @@ export default async function FamilyResidentPage({
       )}
 
       <div className="text-center">
-        <Link href="/family">
+        <Link href="/family-portal">
           <Button variant="ghost" size="sm">
             Back
           </Button>
