@@ -30,6 +30,20 @@ export default async function DashboardLayout({
   }
 
   const org = (user as { organizations: { subscription_status: string; trial_ends_at: string | null } }).organizations;
+  const typedUser = user as { id: string; organization_id: string; role: string };
+
+  // Pending family-memo count for the admin nav badge. Cheap query —
+  // RLS already restricts to the caller's org via is_admin/is_staff
+  // policies. We only fetch for admins to avoid wasted work.
+  let pendingFamilyMemoCount = 0;
+  if (typedUser.role === "admin" || typedUser.role === "compliance_admin") {
+    const { count } = await supabase
+      .from("family_voice_memos")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", typedUser.organization_id)
+      .eq("moderation_status", "pending");
+    pendingFamilyMemoCount = count ?? 0;
+  }
 
   return (
     <>
@@ -37,7 +51,9 @@ export default async function DashboardLayout({
         subscriptionStatus={org.subscription_status}
         trialEndsAt={org.trial_ends_at}
       />
-      <AppShell user={user}>{children}</AppShell>
+      <AppShell user={user} pendingFamilyMemoCount={pendingFamilyMemoCount}>
+        {children}
+      </AppShell>
     </>
   );
 }
