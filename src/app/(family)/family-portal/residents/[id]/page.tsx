@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { VoiceMemoRecorder } from "@/components/family/voice-memo-recorder";
+import { LocalDate } from "@/components/ui/local-date";
 
 // Phase 4: per-resident family page.
 //
@@ -149,7 +150,7 @@ export default async function FamilyResidentPage({
         )}
         {lastUpdatedAt && (
           <p className="text-[10px] text-muted-foreground">
-            Last updated {new Date(lastUpdatedAt).toLocaleString()}
+            Last updated <LocalDate value={lastUpdatedAt} />
           </p>
         )}
       </section>
@@ -190,7 +191,7 @@ export default async function FamilyResidentPage({
                 className="flex items-center justify-between gap-2"
               >
                 <span className="text-muted-foreground">
-                  {new Date(m.created_at).toLocaleString()}
+                  <LocalDate value={m.created_at} />
                   {m.duration_seconds ? ` · ${m.duration_seconds}s` : ""}
                 </span>
                 <Badge

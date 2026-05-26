@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LocalDate } from "@/components/ui/local-date";
 
 // Phase 4: family portal dashboard — lists the residents this family
 // user is linked to via active family_user_links. Per resident, shows
@@ -135,7 +136,7 @@ export default async function FamilyDashboardPage() {
               )}
               {thread?.last_updated_at && (
                 <p className="text-[10px] text-muted-foreground">
-                  Updated {new Date(thread.last_updated_at).toLocaleString()}
+                  Updated <LocalDate value={thread.last_updated_at} />
                 </p>
               )}
               <div className="pt-1 flex items-center gap-2">

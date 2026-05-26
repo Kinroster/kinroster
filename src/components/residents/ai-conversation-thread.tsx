@@ -13,6 +13,7 @@ import {
   Minus,
   CheckCircle2,
 } from "lucide-react";
+import { LocalDate } from "@/components/ui/local-date";
 
 type Trend = "improving" | "stable" | "worsening" | "resolved";
 
@@ -266,7 +267,7 @@ export function AIConversationThread({
               <>Built from {body.notes_consumed_count} notes · </>
             )}
             {lastUpdatedAt && (
-              <>Last updated {new Date(lastUpdatedAt).toLocaleString()}</>
+              <>Last updated <LocalDate value={lastUpdatedAt} /></>
             )}
           </p>
         </>
