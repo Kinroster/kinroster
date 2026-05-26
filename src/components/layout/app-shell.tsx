@@ -18,7 +18,9 @@ import {
   ClipboardList,
   FileArchive,
   FileAudio,
+  Inbox,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -64,9 +66,16 @@ const navItems: NavItem[] = [
 
 export function AppShell({
   user,
+  pendingFamilyMemoCount = 0,
   children,
 }: {
   user: UserWithOrg;
+  /**
+   * Pending family-memo count surfaced on the admin nav badge. Computed
+   * server-side in the dashboard layout so the badge reflects current
+   * state on each page navigation without a client-side fetch.
+   */
+  pendingFamilyMemoCount?: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -133,6 +142,21 @@ export function AppShell({
                     >
                       <ClipboardList className="h-4 w-4" />
                       Assignments
+                    </Link>
+                    <Link
+                      href="/family-memos"
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                    >
+                      <Inbox className="h-4 w-4" />
+                      <span className="flex-1">Family Memos</span>
+                      {pendingFamilyMemoCount > 0 && (
+                        <Badge
+                          variant="outline"
+                          className="text-amber-700 border-amber-500/50 text-xs"
+                        >
+                          {pendingFamilyMemoCount}
+                        </Badge>
+                      )}
                     </Link>
                     <Link
                       href="/sensitive-access"
