@@ -2088,13 +2088,58 @@ export type Database = {
           },
         ]
       }
+      family_invite_tokens: {
+        Row: {
+          id: string
+          organization_id: string
+          family_user_link_id: string
+          token_hash: string
+          email_at_send: string
+          expires_at: string
+          consumed_at: string | null
+          consumed_by_user_id: string | null
+          revoked_at: string | null
+          sent_at: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          family_user_link_id: string
+          token_hash: string
+          email_at_send: string
+          expires_at: string
+          consumed_at?: string | null
+          consumed_by_user_id?: string | null
+          revoked_at?: string | null
+          sent_at?: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          family_user_link_id?: string
+          token_hash?: string
+          email_at_send?: string
+          expires_at?: string
+          consumed_at?: string | null
+          consumed_by_user_id?: string | null
+          revoked_at?: string | null
+          sent_at?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       family_user_links: {
         Row: {
           id: string
           organization_id: string
           user_id: string
           family_contact_id: string
-          phone_at_verification: string
+          phone_at_verification: string | null
           phone_verified_at: string | null
           verification_method: string
           link_status: string
@@ -2111,7 +2156,7 @@ export type Database = {
           organization_id: string
           user_id: string
           family_contact_id: string
-          phone_at_verification: string
+          phone_at_verification?: string | null
           phone_verified_at?: string | null
           verification_method: string
           link_status?: string
@@ -2128,7 +2173,7 @@ export type Database = {
           organization_id?: string
           user_id?: string
           family_contact_id?: string
-          phone_at_verification?: string
+          phone_at_verification?: string | null
           phone_verified_at?: string | null
           verification_method?: string
           link_status?: string
@@ -2373,4 +2418,5 @@ export type ResidentConversationThread = Database["public"]["Tables"]["resident_
 export type ResidentConversationThreadVersion = Database["public"]["Tables"]["resident_conversation_thread_versions"]["Row"];
 export type FamilyUserLink = Database["public"]["Tables"]["family_user_links"]["Row"];
 export type FamilyVoiceMemo = Database["public"]["Tables"]["family_voice_memos"]["Row"];
+export type FamilyInviteToken = Database["public"]["Tables"]["family_invite_tokens"]["Row"];
 
