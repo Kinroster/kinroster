@@ -214,6 +214,92 @@ function buildEmailHtml(body: string, facilityName: string): string {
 </html>`;
 }
 
+interface SendFamilyInviteParams {
+  to: string;
+  contactName: string;
+  residentFirstName: string;
+  facilityName: string;
+  fromName: string;
+  replyTo: string;
+  inviteUrl: string;
+  expiresAt: Date;
+}
+
+// Family-portal invite email. Contains a magic link that, once clicked
+// + confirmed, signs the family member into the portal where they can
+// read the family-safe summary and leave voice memos. No PHI beyond the
+// resident's first name — same posture as the confirmation email below.
+export async function sendFamilyInvite({
+  to,
+  contactName,
+  residentFirstName,
+  facilityName,
+  fromName,
+  replyTo,
+  inviteUrl,
+  expiresAt,
+}: SendFamilyInviteParams): Promise<{ id: string }> {
+  if (!resend) {
+    throw new Error("Email sending is not configured (RESEND_API_KEY missing)");
+  }
+
+  const expiresDisplay = expiresAt.toLocaleString("en-US", {
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+
+  const subject = `Access ${residentFirstName}'s care updates`;
+  const html = buildFamilyInviteHtml({
+    contactName,
+    residentFirstName,
+    facilityName,
+    inviteUrl,
+    expiresDisplay,
+  });
+
+  const { data, error } = await resend.emails.send({
+    from: `${fromName} <updates@${process.env.RESEND_DOMAIN || "kinroster.com"}>`,
+    replyTo,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { id: data!.id };
+}
+
+function buildFamilyInviteHtml(params: {
+  contactName: string;
+  residentFirstName: string;
+  facilityName: string;
+  inviteUrl: string;
+  expiresDisplay: string;
+}): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a; background: #ffffff;">
+  <div style="border-bottom: 2px solid #e5e5e5; padding-bottom: 16px; margin-bottom: 24px;">
+    <h2 style="margin: 0; font-size: 18px; color: #1a1a1a;">${params.facilityName}</h2>
+  </div>
+  <p style="margin: 0 0 16px 0; line-height: 1.6;">Hello ${params.contactName},</p>
+  <p style="margin: 0 0 16px 0; line-height: 1.6;">${params.facilityName} has invited you to the family portal for <strong>${params.residentFirstName}</strong>. You'll be able to read a plain-language summary of how they're doing and leave voice memos for the care team.</p>
+  <p style="margin: 24px 0;">
+    <a href="${params.inviteUrl}" style="background: #1a1a1a; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 500;">Open the family portal</a>
+  </p>
+  <p style="margin: 0 0 16px 0; line-height: 1.6; font-size: 14px; color: #555;">This link expires on <strong>${params.expiresDisplay}</strong> and can only be used once.</p>
+  <div style="border-top: 1px solid #e5e5e5; padding-top: 16px; margin-top: 24px; font-size: 12px; color: #666;">
+    <p style="margin: 0 0 6px 0;">Sent by ${params.facilityName} using Kinroster, a documentation tool for care facilities.</p>
+    <p style="margin: 0;">If you weren't expecting this email, you can safely ignore it — the link will expire on its own and no account will be created.</p>
+  </div>
+</body>
+</html>`;
+}
+
 interface SendFamilyContactConfirmationParams {
   to: string;
   contactName: string;

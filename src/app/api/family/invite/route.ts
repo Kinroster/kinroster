@@ -2,28 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
-import { sendSmsOtp } from "@/lib/external/sms-otp";
+import { checkRate } from "@/lib/rate-limit";
+import { sendFamilyInvite } from "@/lib/resend";
+import {
+  generateInviteToken,
+  defaultInviteExpiresAt,
+} from "@/lib/family/invite-token";
 
-// Phase 4: admin-initiated family invite.
+// Phase 4 follow-up: admin-initiated family invite via email magic-link.
 //
-// Admin opens a family_contacts card, clicks "Invite to portal". The
-// route:
-//   1. Validates the contact belongs to admin's org.
-//   2. Confirms phone is present and looks like E.164.
-//   3. Creates an auth.users row with phone-primary auth (or reuses
-//      an existing one if the phone is already known).
-//   4. Creates a `users` row with role='family' (if not already there).
-//   5. Inserts family_user_links with link_status='pending'.
-//   6. Triggers SMS OTP via Supabase Auth phone provider.
+// Replaces the SMS-OTP path (Twilio) with a $0-marginal email link
+// delivered through Resend. The route:
+//   1. Validates the contact belongs to admin's org + has an email.
+//   2. Reuses an existing family auth user for this email, or creates one.
+//   3. Upserts users(role='family') + family_user_links(pending).
+//   4. Generates a single-use token, stores its hash, emails the link.
+//   5. Rate-limits at 3/day/family_contact_id (bounds abuse).
 //
-// Rate limit (TODO follow-up): 3/day/family_contact_id at this route.
+// The SMS path (src/lib/external/sms-otp.ts) is left dormant for orgs
+// that later opt into Twilio.
+
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://kinroster.com";
 
 interface InviteBody {
   familyContactId: string;
 }
 
-function isE164(s: string): boolean {
-  return /^\+[1-9]\d{6,14}$/.test(s);
+function isEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
 export async function POST(request: NextRequest) {
@@ -63,83 +69,110 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Rate limit: 3 invites per family_contact_id per 24h. Bounds both
+  // accidental double-clicks and deliberate abuse. Done before any
+  // write so a throttled caller doesn't create orphan rows.
+  const rl = checkRate(
+    `family-invite-${body.familyContactId}`,
+    3,
+    24 * 60 * 60 * 1000
+  );
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        error: "Too many invites for this contact. Try again later.",
+        retryAfterMs: rl.retryAfterMs,
+      },
+      { status: 429 }
+    );
+  }
+
   // Load the contact + cross-check org.
   const { data: contactRow } = await supabase
     .from("family_contacts")
-    .select("id, name, phone, resident_id, residents(organization_id)")
+    .select("id, name, email, resident_id, residents(first_name, organization_id)")
     .eq("id", body.familyContactId)
     .single();
   const contact = contactRow as
     | {
         id: string;
         name: string;
-        phone: string | null;
+        email: string | null;
         resident_id: string;
-        residents: { organization_id: string } | null;
+        residents: { first_name: string; organization_id: string } | null;
       }
     | null;
   if (!contact || !contact.residents) {
-    return NextResponse.json(
-      { error: "Contact not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Contact not found" }, { status: 404 });
   }
   if (contact.residents.organization_id !== typedUser.organization_id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if (!contact.phone || !isE164(contact.phone)) {
+  if (!contact.email || !isEmail(contact.email)) {
     return NextResponse.json(
-      { error: "Contact phone missing or not E.164" },
+      { error: "Contact has no valid email on file. Add one first." },
       { status: 400 }
     );
   }
+  const email = contact.email.toLowerCase();
 
   const admin = createAdminClient();
 
-  // Create the auth.users row. Supabase Auth dedupes on phone — if the
-  // family member was previously invited (e.g., a sibling at another
-  // facility), createUser returns "already_registered". We surface that
-  // as a 409 rather than silently dedup, because taking over an account
-  // belonging to a different org's family contact is a real privilege-
-  // escalation risk. The admin's workflow in that case is to revoke
-  // the prior link first (or contact ops for a manual merge).
-  const { data: authData, error: createError } =
-    await admin.auth.admin.createUser({
-      phone: contact.phone,
-      phone_confirm: false,
-      user_metadata: { role: "family", invited_by: user.id },
-    });
-  if (createError || !authData?.user?.id) {
-    const alreadyRegistered =
-      createError && /already.*registered/i.test(createError.message);
-    return NextResponse.json(
+  // Reuse an existing family auth user for this email (a family member
+  // may be linked to several residents in the same facility — the
+  // family_user_links table is many-to-many for exactly this). Look up
+  // by the public.users mirror, which stores the real email for family
+  // accounts.
+  const { data: existingUserRow } = await admin
+    .from("users")
+    .select("id, role")
+    .eq("email", email)
+    .maybeSingle();
+  const existingUser = existingUserRow as
+    | { id: string; role: string }
+    | null;
+
+  let authUserId: string;
+  if (existingUser) {
+    if (existingUser.role !== "family") {
+      return NextResponse.json(
+        {
+          error:
+            "That email already belongs to a staff account. Use a different email for the family contact.",
+          code: "email_belongs_to_staff",
+        },
+        { status: 409 }
+      );
+    }
+    authUserId = existingUser.id;
+  } else {
+    const { data: authData, error: createError } =
+      await admin.auth.admin.createUser({
+        email,
+        email_confirm: false,
+        user_metadata: { role: "family", invited_by: user.id },
+      });
+    if (createError || !authData?.user?.id) {
+      return NextResponse.json(
+        { error: "Failed to create auth user", details: createError?.message },
+        { status: 500 }
+      );
+    }
+    authUserId = authData.user.id;
+
+    await admin.from("users").upsert(
       {
-        error: alreadyRegistered
-          ? "A family account already exists for this phone number. Revoke the existing link before re-inviting, or contact support to merge."
-          : "Failed to create auth user",
-        details: createError?.message,
-        code: alreadyRegistered ? "already_registered" : "create_failed",
+        id: authUserId,
+        organization_id: typedUser.organization_id,
+        email,
+        full_name: contact.name,
+        role: "family",
       },
-      { status: alreadyRegistered ? 409 : 500 }
+      { onConflict: "id" }
     );
   }
-  const authUserId = authData.user.id;
 
-  // Ensure a `users` row exists for this auth user with role='family'.
-  // handle_new_user trigger covers normal signup; admin-created users
-  // don't fire it, so we upsert explicitly.
-  await admin.from("users").upsert(
-    {
-      id: authUserId,
-      organization_id: typedUser.organization_id,
-      email: `family-${authUserId}@kinroster.local`,
-      full_name: contact.name,
-      role: "family",
-    },
-    { onConflict: "id" }
-  );
-
-  // Insert or update the family_user_links row.
+  // Insert/update the link row (pending until the token is redeemed).
   const { data: linkRow, error: linkError } = await admin
     .from("family_user_links")
     .upsert(
@@ -147,8 +180,7 @@ export async function POST(request: NextRequest) {
         organization_id: typedUser.organization_id,
         user_id: authUserId,
         family_contact_id: contact.id,
-        phone_at_verification: contact.phone,
-        verification_method: "sms_otp",
+        verification_method: "email_link",
         link_status: "pending",
         invited_by_user_id: user.id,
         invited_at: new Date().toISOString(),
@@ -165,11 +197,57 @@ export async function POST(request: NextRequest) {
   }
   const linkId = (linkRow as { id: string }).id;
 
-  // Dispatch the OTP.
-  const otp = await sendSmsOtp(contact.phone);
-  if (!otp.ok) {
+  // Mint + store the single-use token.
+  const { unsigned, hash } = generateInviteToken();
+  const expiresAt = defaultInviteExpiresAt();
+  const { error: tokenError } = await admin
+    .from("family_invite_tokens")
+    .insert({
+      organization_id: typedUser.organization_id,
+      family_user_link_id: linkId,
+      token_hash: hash,
+      email_at_send: email,
+      expires_at: expiresAt.toISOString(),
+      created_by: user.id,
+    });
+  if (tokenError) {
     return NextResponse.json(
-      { error: "Failed to send OTP", details: otp.error },
+      { error: "Failed to create invite token", details: tokenError.message },
+      { status: 500 }
+    );
+  }
+
+  // Org name + reply-to for the email envelope.
+  const { data: orgRow } = await admin
+    .from("organizations")
+    .select("name, email_reply_to")
+    .eq("id", typedUser.organization_id)
+    .single();
+  const org = orgRow as
+    | { name: string; email_reply_to: string | null }
+    | null;
+  const facilityName = org?.name ?? "Your care facility";
+  const replyTo = org?.email_reply_to ?? "support@kinroster.com";
+
+  const inviteUrl = `${SITE_URL}/family-portal/verify?token=${unsigned}`;
+
+  try {
+    await sendFamilyInvite({
+      to: email,
+      contactName: contact.name,
+      residentFirstName: contact.residents.first_name,
+      facilityName,
+      fromName: facilityName,
+      replyTo,
+      inviteUrl,
+      expiresAt,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error: "Failed to send invite email",
+        details: err instanceof Error ? err.message : String(err),
+      },
       { status: 502 }
     );
   }
@@ -184,9 +262,9 @@ export async function POST(request: NextRequest) {
     metadata: {
       family_contact_id: contact.id,
       resident_id: contact.resident_id,
-      phone_last4: contact.phone.slice(-4),
+      channel: "email_link",
     },
   });
 
-  return NextResponse.json({ linkId, status: "otp_sent" });
+  return NextResponse.json({ linkId, status: "invite_sent" });
 }
