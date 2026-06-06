@@ -1,0 +1,35 @@
+{
+  "id": "cs-stable-week-01",
+  "prompt": "clinician-summary",
+  "lang": "en",
+  "tags": ["clinician", "stable"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Margaret",
+    "residentLastName": "Doyle",
+    "residentDob": "1939-02-20",
+    "clinicianName": "Dr. Osei",
+    "relationship": "Geriatrician",
+    "dateRangeStart": "2026-04-01",
+    "dateRangeEnd": "2026-04-07",
+    "conditions": "osteoarthritis",
+    "careNotesContext": "Independent with most ADLs.",
+    "notes": [
+      {
+        "created_at": "2026-04-02T17:00:00Z",
+        "author_name": "James",
+        "structured_output": "{\"summary\":\"Stable, social day.\",\"sections\":[{\"name\":\"Nutrition\",\"text\":\"Full meals.\"},{\"name\":\"Mobility\",\"text\":\"Walked the hall unaided.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      },
+      {
+        "created_at": "2026-04-05T17:00:00Z",
+        "author_name": "Aisha",
+        "structured_output": "{\"summary\":\"Mild knee discomfort.\",\"sections\":[{\"name\":\"Comfort\",\"text\":\"Reported mild left knee stiffness in the morning that eased with movement.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {}
+  }
+}

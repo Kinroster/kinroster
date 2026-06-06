@@ -1,6 +1,6 @@
-// Live eval spec for the safety-critical prompts (Slice 1: shift-note +
-// incident-classify). Runs every case in tests/prompts/ against the real
-// Claude API, then asserts per-case hard gates and aggregate rate thresholds.
+// Live eval spec for all 7 Claude prompts. Runs every case in tests/prompts/
+// against the real Claude API, then asserts per-case hard gates and aggregate
+// rate thresholds.
 //
 // Skips itself (exit 0) when ANTHROPIC_API_KEY is absent, so keyless local
 // runs and fork PRs don't error. This file lives outside src/ and matches
@@ -17,14 +17,32 @@ const cases = loadCases();
 const runs: CaseRun[] = [];
 let scorecard: Scorecard;
 
+// Bounded concurrency — fast enough for ~50 cases without hammering rate
+// limits. Each case may fan out to a judge call too, so keep this modest.
+const CONCURRENCY = 4;
+
+async function runPool<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+}
+
 beforeAll(async () => {
   if (!hasKey) return;
-  // Sequential to stay gentle on rate limits; ~10 cases is fast enough.
-  for (const c of cases) {
+  await runPool(cases, CONCURRENCY, async (c) => {
     runs.push(await runCase(c));
-  }
+  });
   scorecard = buildScorecard(runs);
-}, 300_000);
+}, 1_200_000);
 
 afterAll(() => {
   if (!hasKey || runs.length === 0) return;

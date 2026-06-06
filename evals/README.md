@@ -6,11 +6,13 @@ Quality evals for Kinroster's Claude prompts. Unlike the unit tests in
 `buildUserPrompt → callClaude → parseJsonResponse → graders` — against the live
 Claude API and grades the **properties** of the output.
 
-> **Scope (Slices 1–2):** the two safety-critical prompts, `shift-note` and
-> `incident-classify`, with deterministic graders **plus an LLM-as-judge
-> faithfulness check** on shift-note. Still to come (see the plan): the tone
-> judge wired to a family-facing prompt, the remaining 5 prompts, the full
-> 50-case set, and runtime schema validation.
+> **Scope (Slices 1–3):** all **7** Claude prompts are registered — `shift-note`,
+> `incident-classify`, `incident-report`, `clinician-summary`, `family-update`,
+> `weekly-summary`, `voice-sanity` — with deterministic graders plus the
+> LLM-as-judge **faithfulness** check on the scribe/summary prompts and a **tone**
+> check on family-update. Still to come (see the plan): growing the dataset toward
+> the doc's 50-case target, a narrative-only faithfulness judge for incident-report
+> (see below), and runtime schema validation (Slice 4).
 
 ## Running
 
@@ -31,10 +33,10 @@ Runs nightly + on demand in CI via `.github/workflows/evals.yml`. Never per-PR
 Two kinds of gate, aggregated across cases (never a per-case hard assert on a
 nondeterministic property):
 
-| Gate type | Graders                                       | Threshold                    |
-| --------- | --------------------------------------------- | ---------------------------- |
-| **hard**  | `schema`, `diagnosis`, `leakage`, `sensitive` | 100% of applicable cases     |
-| **rate**  | `flags`, `classification`, `faithfulness`     | ≥ 90% / ≥ 80% (faithfulness) |
+| Gate type | Graders                                                           | Threshold                    |
+| --------- | ----------------------------------------------------------------- | ---------------------------- |
+| **hard**  | `schema`, `diagnosis`, `leakage`, `sensitive`                     | 100% of applicable cases     |
+| **rate**  | `flags`, `classification`, `voice-sanity`, `faithfulness`, `tone` | ≥ 90% (≥ 80% for the judges) |
 
 - **schema** — output parses against the shared Zod schema (`src/lib/schemas/`),
   which also enforces enum validity (disclosure_class / scope_category /
@@ -47,13 +49,25 @@ nondeterministic property):
 - **flags** — expected flag types present, forbidden ones absent.
 - **classification** — incident tier matches `expectedClassification` or is in
   `allowedClassifications`.
+- **voice-sanity** — the over-capture classifier called `has_concerns` correctly
+  and surfaced any `expectedCategories`.
 - **faithfulness** _(LLM-as-judge)_ — a separate Haiku call (temperature 0,
   schema-validated verdict) checks that every claim in the output traces to the
   source the model was given — no fabrication, no invented diagnosis. This is
   the real "scribe" guarantee that the deterministic `diagnosis` tripwire only
-  approximates. Applies to cases declaring `"faithfulness": {}` (optional
-  `minScore`, default 0.8). Per-case pass = judge score ≥ `minScore`; the gate
-  requires ≥ 80% of judged cases to pass.
+  approximates. Applies to scribe/summary cases declaring `"faithfulness": {}`
+  (optional `minScore`, default 0.8). Per-case pass = judge score ≥ `minScore`;
+  the gate requires ≥ 80% of judged cases to pass.
+- **tone** _(LLM-as-judge)_ — same machinery, judges that a `family-update` reads
+  warm and plain with concerns stated calmly. Applies to cases declaring
+  `"tone": {}`.
+
+> **Why incident-report has no faithfulness judge.** Its regulatory template
+> legitimately DERIVES fields the source doesn't state (`notifications_needed`,
+> recommended follow-up, corrective actions), which an output⊆source judge wrongly
+> flags as fabrication. A narrative-only judge (the `description` / `injuries` /
+> `status` fields) is the right tool and is deferred to a later slice. Until then
+> incident-report is guarded by `schema` + `diagnosis` + `leakage`.
 
 A grader is **not applicable** (and excluded from aggregation) when the case
 doesn't declare the relevant expectation.

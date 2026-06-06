@@ -1,0 +1,33 @@
+{
+  "id": "fu-positive-week-01",
+  "prompt": "family-update",
+  "lang": "en",
+  "tags": ["family", "positive"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Margaret",
+    "residentLastName": "Doyle",
+    "familyContactName": "Karen",
+    "relationship": "Daughter",
+    "dateRangeStart": "2026-04-01",
+    "dateRangeEnd": "2026-04-04",
+    "notes": [
+      {
+        "created_at": "2026-04-01T17:00:00Z",
+        "author_name": "James",
+        "structured_output": "{\"summary\":\"Margaret had a cheerful, social day.\",\"sections\":[{\"name\":\"Mood & Behavior\",\"text\":\"In good spirits; chatted with other residents at lunch.\"},{\"name\":\"Nutrition\",\"text\":\"Ate a full lunch and most of breakfast.\"},{\"name\":\"Social Activity\",\"text\":\"Joined the afternoon music session and sang along.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      },
+      {
+        "created_at": "2026-04-03T17:00:00Z",
+        "author_name": "Aisha",
+        "structured_output": "{\"summary\":\"Margaret enjoyed time in the garden.\",\"sections\":[{\"name\":\"Mobility\",\"text\":\"Walked in the garden for about fifteen minutes with her walker.\"},{\"name\":\"Mood & Behavior\",\"text\":\"Relaxed and talkative; spoke fondly about her grandchildren.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {},
+    "tone": {}
+  }
+}

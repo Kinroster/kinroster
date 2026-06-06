@@ -1,0 +1,18 @@
+{
+  "id": "ir-fall-witnessed-01",
+  "prompt": "incident-report",
+  "lang": "en",
+  "tags": ["incident", "fall"],
+  "input": {
+    "residentFirstName": "Harold",
+    "residentLastName": "Park",
+    "conditions": "hypertension, mild cognitive impairment",
+    "timestamp": "2026-04-06T08:30:00Z",
+    "caregiverName": "Aisha",
+    "rawInput": "i was in the room when harold tried to stand from his chair and lost his balance, he went down onto his left side on the carpet. i helped him up, he was alert and talking. small red mark on his left elbow, no bleeding. he walked back to bed with his walker. told the nurse."
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true
+  }
+}

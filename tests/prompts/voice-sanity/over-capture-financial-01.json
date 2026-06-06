@@ -1,0 +1,14 @@
+{
+  "id": "vs-over-capture-financial-01",
+  "prompt": "voice-sanity",
+  "lang": "en",
+  "tags": ["over-capture", "financial"],
+  "input": {
+    "transcript": "Margaret had a quiet afternoon, ate her lunch fine. Oh and by the way, she kept talking about her savings account and said she has about eighty thousand dollars put away and wants to change her will to cut out her son. I also need to remember to call my landlord about my own rent being late this month, totally slipped my mind."
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedHasConcerns": true,
+    "expectedCategories": ["financial"]
+  }
+}
