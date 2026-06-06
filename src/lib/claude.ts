@@ -233,14 +233,28 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
   return text;
 }
 
-export function parseJsonResponse<T>(raw: string): T {
+/**
+ * Parse a model JSON response. Strips code fences and tolerates a valid JSON
+ * value followed by trailing prose (see the fallback below).
+ *
+ * When a `schema` is passed (any object with a Zod-style `parse(data): T` — e.g.
+ * one of the shared schemas in src/lib/schemas), the parsed value is VALIDATED
+ * against it and the schema's (possibly normalized) result is returned. A
+ * mismatch throws — callers that classify errors (e.g. structureNote) treat
+ * that as a non-retryable failure, turning a silently-wrong shape into a caught
+ * is_structured=false rather than a downstream crash. Without a schema the
+ * behaviour is unchanged: parse + type-assert.
+ */
+export function parseJsonResponse<T>(raw: string, schema?: { parse(data: unknown): T }): T {
   // Strip markdown code fences if present
   const cleaned = raw
     .replace(/^```(?:json)?\s*/m, '')
     .replace(/\s*```$/m, '')
     .trim();
+
+  let value: unknown;
   try {
-    return JSON.parse(cleaned) as T;
+    value = JSON.parse(cleaned);
   } catch (err) {
     // Robustness fallback: models occasionally emit a valid JSON object
     // followed by prose (most often when refusing an adversarial instruction,
@@ -249,9 +263,11 @@ export function parseJsonResponse<T>(raw: string): T {
     // the note is_structured=false. Extract the first balanced JSON value and
     // parse that; clean responses never hit this path.
     const extracted = extractFirstJson(cleaned);
-    if (extracted !== null) return JSON.parse(extracted) as T;
-    throw err;
+    if (extracted === null) throw err;
+    value = JSON.parse(extracted);
   }
+
+  return schema ? schema.parse(value) : (value as T);
 }
 
 /**
