@@ -1,12 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Anthropic SDK is mocked at the module level so importing claude.ts doesn't
 // touch the real client. Individual tests then mock callClaude directly.
-vi.mock("@anthropic-ai/sdk", () => ({ default: vi.fn() }));
-vi.mock("@/lib/claude", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/claude")>(
-    "@/lib/claude"
-  );
+vi.mock('@anthropic-ai/sdk', () => ({ default: vi.fn() }));
+vi.mock('@/lib/claude', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/claude')>('@/lib/claude');
   return {
     ...actual,
     callClaude: vi.fn(),
@@ -14,8 +12,8 @@ vi.mock("@/lib/claude", async () => {
   };
 });
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { callClaude, callClaudeWithUsage } from "@/lib/claude";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { callClaude, callClaudeWithUsage } from '@/lib/claude';
 
 const EMPTY_USAGE = {
   input_tokens: 0,
@@ -23,10 +21,7 @@ const EMPTY_USAGE = {
   cache_read_input_tokens: 0,
   cache_creation_input_tokens: 0,
 };
-import {
-  structureNote,
-  MAX_STRUCTURING_ATTEMPTS,
-} from "@/lib/services/structure-note";
+import { structureNote, MAX_STRUCTURING_ATTEMPTS } from '@/lib/services/structure-note';
 
 interface NoteFixture {
   id: string;
@@ -43,15 +38,16 @@ interface NoteFixture {
 }
 
 const VALID_STRUCTURED_OUTPUT = JSON.stringify({
-  summary: "Quiet shift.",
+  summary: 'Quiet shift.',
   sections: [
     {
-      name: "Mood",
-      content: "Calm and engaged.",
-      disclosure_class: "family_shareable_by_involvement",
+      name: 'Mood',
+      text: 'Calm and engaged.',
+      disclosure_class: 'family_shareable_by_involvement',
+      scope_category: 'wellbeing_summary',
     },
   ],
-  follow_up: "None.",
+  follow_up: 'None.',
   flags: [],
   sensitive_flag: false,
   sensitive_category: null,
@@ -65,7 +61,7 @@ interface FakeState {
 function fakeSupabase(state: FakeState): SupabaseClient {
   return {
     from(table: string) {
-      if (table === "notes") {
+      if (table === 'notes') {
         return {
           select() {
             return {
@@ -84,7 +80,7 @@ function fakeSupabase(state: FakeState): SupabaseClient {
             // Also reflect attempt-counter updates back into the fixture so a
             // later .single() (we don't have one but harmless) would see the
             // new value.
-            if (typeof values.structuring_attempts === "number") {
+            if (typeof values.structuring_attempts === 'number') {
               state.note.structuring_attempts = values.structuring_attempts;
             }
             return {
@@ -93,14 +89,14 @@ function fakeSupabase(state: FakeState): SupabaseClient {
           },
         };
       }
-      if (table === "users") {
+      if (table === 'users') {
         return {
           select() {
             return {
               eq() {
                 return {
                   single: async () => ({
-                    data: { full_name: "Alice" },
+                    data: { full_name: 'Alice' },
                     error: null,
                   }),
                 };
@@ -116,14 +112,14 @@ function fakeSupabase(state: FakeState): SupabaseClient {
 
 function makeNote(overrides: Partial<NoteFixture> = {}): NoteFixture {
   return {
-    id: "note-1",
-    raw_input: "Resident had a quiet morning.",
-    created_at: "2026-05-09T08:00:00Z",
-    author_id: "user-1",
+    id: 'note-1',
+    raw_input: 'Resident had a quiet morning.',
+    created_at: '2026-05-09T08:00:00Z',
+    author_id: 'user-1',
     structuring_attempts: 0,
     residents: {
-      first_name: "Mei",
-      last_name: "Lin",
+      first_name: 'Mei',
+      last_name: 'Lin',
       care_notes_context: null,
       conditions: null,
     },
@@ -131,25 +127,25 @@ function makeNote(overrides: Partial<NoteFixture> = {}): NoteFixture {
   };
 }
 
-describe("structureNote", () => {
+describe('structureNote', () => {
   beforeEach(() => {
     vi.mocked(callClaude).mockReset();
     vi.mocked(callClaudeWithUsage).mockReset();
   });
 
-  it("success path: parses, persists, returns structured", async () => {
+  it('success path: parses, persists, returns structured', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
     vi.mocked(callClaudeWithUsage).mockResolvedValue({
       text: VALID_STRUCTURED_OUTPUT,
       usage: EMPTY_USAGE,
     });
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.success).toBe(true);
     expect(result.attempts).toBe(1);
     expect(result.gaveUp).toBe(false);
-    expect(result.structured?.summary).toBe("Quiet shift.");
+    expect(result.structured?.summary).toBe('Quiet shift.');
 
     // Two writes: increment attempts, then success update.
     expect(state.updates).toHaveLength(2);
@@ -159,30 +155,30 @@ describe("structureNote", () => {
     expect(state.updates[1].structuring_giving_up).toBe(false);
   });
 
-  it("merges extraMetadata into final metadata on success", async () => {
+  it('merges extraMetadata into final metadata on success', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
     vi.mocked(callClaudeWithUsage).mockResolvedValue({
       text: VALID_STRUCTURED_OUTPUT,
       usage: EMPTY_USAGE,
     });
 
-    await structureNote(fakeSupabase(state), "note-1", {
-      extraMetadata: { source: "voice_call", voice_session_id: "v-9" },
+    await structureNote(fakeSupabase(state), 'note-1', {
+      extraMetadata: { source: 'voice_call', voice_session_id: 'v-9' },
     });
 
     const meta = state.updates[1].metadata as Record<string, unknown>;
-    expect(meta.source).toBe("voice_call");
-    expect(meta.voice_session_id).toBe("v-9");
-    expect(meta.model_used).toBe("claude-sonnet-4-6");
+    expect(meta.source).toBe('voice_call');
+    expect(meta.voice_session_id).toBe('v-9');
+    expect(meta.model_used).toBe('claude-sonnet-4-6');
   });
 
-  it("retryable failure: 429 rate limit increments attempts, does not give up", async () => {
+  it('retryable failure: 429 rate limit increments attempts, does not give up', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    const err = new Error("rate limit") as Error & { status?: number };
+    const err = new Error('rate limit') as Error & { status?: number };
     err.status = 429;
     vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.success).toBe(false);
     expect(result.retryable).toBe(true);
@@ -192,17 +188,17 @@ describe("structureNote", () => {
     expect(state.updates).toHaveLength(2);
     expect(state.updates[1].is_structured).toBe(false);
     expect(state.updates[1].structuring_giving_up).toBe(false);
-    expect(state.updates[1].structuring_error).toBe("rate limit");
+    expect(state.updates[1].structuring_error).toBe('rate limit');
   });
 
-  it("non-retryable failure (parse error) flips giving_up immediately", async () => {
+  it('non-retryable failure (parse error) flips giving_up immediately', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
     vi.mocked(callClaudeWithUsage).mockResolvedValue({
-      text: "not json at all",
+      text: 'not json at all',
       usage: EMPTY_USAGE,
     });
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.success).toBe(false);
     expect(result.retryable).toBe(false);
@@ -212,28 +208,54 @@ describe("structureNote", () => {
     expect(state.updates[1].structuring_giving_up).toBe(true);
   });
 
-  it("non-retryable failure (4xx other than 429) flips giving_up immediately", async () => {
+  it('non-retryable failure (schema mismatch) flips giving_up immediately', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    const err = new Error("bad request") as Error & { status?: number };
+    // Valid JSON, but the wrong SHAPE — `flags` is a string instead of an
+    // array. Pre-Slice-4 this was a silent type-lie; now zShiftNoteOutput
+    // rejects it and it is classified non-retryable, surfacing the bad output.
+    vi.mocked(callClaudeWithUsage).mockResolvedValue({
+      text: JSON.stringify({
+        summary: 'x',
+        sections: [],
+        follow_up: 'None.',
+        flags: 'oops',
+        sensitive_flag: false,
+        sensitive_category: null,
+      }),
+      usage: EMPTY_USAGE,
+    });
+
+    const result = await structureNote(fakeSupabase(state), 'note-1');
+
+    expect(result.success).toBe(false);
+    expect(result.retryable).toBe(false);
+    expect(result.gaveUp).toBe(true);
+    expect(state.updates[1].is_structured).toBe(false);
+    expect(state.updates[1].structuring_giving_up).toBe(true);
+  });
+
+  it('non-retryable failure (4xx other than 429) flips giving_up immediately', async () => {
+    const state: FakeState = { note: makeNote(), updates: [] };
+    const err = new Error('bad request') as Error & { status?: number };
     err.status = 400;
     vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.retryable).toBe(false);
     expect(result.gaveUp).toBe(true);
   });
 
-  it("retryable failure flips giving_up at MAX_STRUCTURING_ATTEMPTS", async () => {
+  it('retryable failure flips giving_up at MAX_STRUCTURING_ATTEMPTS', async () => {
     const state: FakeState = {
       note: makeNote({ structuring_attempts: MAX_STRUCTURING_ATTEMPTS - 1 }),
       updates: [],
     };
-    const err = new Error("rate limit") as Error & { status?: number };
+    const err = new Error('rate limit') as Error & { status?: number };
     err.status = 429;
     vi.mocked(callClaudeWithUsage).mockRejectedValue(err);
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.retryable).toBe(true);
     expect(result.attempts).toBe(MAX_STRUCTURING_ATTEMPTS);
@@ -241,11 +263,11 @@ describe("structureNote", () => {
     expect(state.updates[1].structuring_giving_up).toBe(true);
   });
 
-  it("network/timeout errors with no status are treated as retryable", async () => {
+  it('network/timeout errors with no status are treated as retryable', async () => {
     const state: FakeState = { note: makeNote(), updates: [] };
-    vi.mocked(callClaudeWithUsage).mockRejectedValue(new Error("fetch failed"));
+    vi.mocked(callClaudeWithUsage).mockRejectedValue(new Error('fetch failed'));
 
-    const result = await structureNote(fakeSupabase(state), "note-1");
+    const result = await structureNote(fakeSupabase(state), 'note-1');
 
     expect(result.retryable).toBe(true);
     expect(result.gaveUp).toBe(false);
