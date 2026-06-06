@@ -1,0 +1,21 @@
+{
+  "id": "sn-normal-quiet-day-02",
+  "prompt": "shift-note",
+  "lang": "en",
+  "tags": ["normal", "sleep"],
+  "input": {
+    "residentFirstName": "Albert",
+    "residentLastName": "Stone",
+    "careNotesContext": null,
+    "conditions": "congestive heart failure",
+    "timestamp": "2026-04-07T18:00:00Z",
+    "caregiverName": "Priya",
+    "rawInput": "quiet day for albert, slept a lot in the afternoon, ate about half his dinner, watched some tv in the lounge. no complaints, said he was just tired."
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
+  }
+}

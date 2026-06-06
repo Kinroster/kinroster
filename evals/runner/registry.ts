@@ -63,10 +63,15 @@ function strOrNull(input: Record<string, unknown>, key: string): string | null {
   return typeof v === 'string' ? v : null;
 }
 
+/** Optional non-empty string — used to pass an output-language override only
+ *  when a case sets one (otherwise the builder defaults to English). */
+function optStr(input: Record<string, unknown>, key: string): string | undefined {
+  const v = input[key];
+  return typeof v === 'string' && v.length > 0 ? v : undefined;
+}
+
 /** Normalize a case's `notes` payload to the shape the summary builders expect. */
-function notesArr(
-  input: Record<string, unknown>
-): Array<{
+function notesArr(input: Record<string, unknown>): Array<{
   created_at: string;
   author_name: string;
   structured_output: string;
@@ -127,6 +132,7 @@ export const REGISTRY: Record<PromptId, PromptEntry> = {
         caregiverName: str(input, 'caregiverName', 'Caregiver'),
         rawInput: str(input, 'rawInput'),
         localeContext: null,
+        outputLanguage: optStr(input, 'outputLanguage'),
       }),
   },
   'clinician-summary': {
@@ -149,6 +155,7 @@ export const REGISTRY: Record<PromptId, PromptEntry> = {
         careNotesContext: strOrNull(input, 'careNotesContext'),
         notes: notesArr(input),
         localeContext: null,
+        clinicalLanguage: optStr(input, 'outputLanguage'),
       }),
   },
   'family-update': {
@@ -168,6 +175,7 @@ export const REGISTRY: Record<PromptId, PromptEntry> = {
         dateRangeEnd: str(input, 'dateRangeEnd', '2026-04-07'),
         notes: notesArr(input),
         localeContext: null,
+        familyLanguage: optStr(input, 'outputLanguage'),
       }),
   },
   'weekly-summary': {
@@ -187,6 +195,7 @@ export const REGISTRY: Record<PromptId, PromptEntry> = {
         weekEnd: str(input, 'weekEnd', '2026-04-07'),
         notes: notesArr(input),
         localeContext: null,
+        outputLanguage: optStr(input, 'outputLanguage'),
       }),
   },
   'voice-sanity': {

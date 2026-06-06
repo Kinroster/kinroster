@@ -1,0 +1,19 @@
+{
+  "id": "ir-zh-tw-fall-01",
+  "prompt": "incident-report",
+  "lang": "zh-TW",
+  "tags": ["incident", "fall", "multilingual", "zh-TW"],
+  "input": {
+    "residentFirstName": "建國",
+    "residentLastName": "陳",
+    "conditions": "高血壓、輕度認知障礙",
+    "timestamp": "2026-04-06T08:30:00Z",
+    "caregiverName": "美惠",
+    "outputLanguage": "zh-TW",
+    "rawInput": "我在房間時，陳爺爺想從椅子站起來，重心不穩往左側倒在地毯上。我扶他起來，他意識清楚也能說話，左手肘有一點紅，沒有流血。他用助行器走回床上。已通知護理師。"
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true
+  }
+}
