@@ -14,7 +14,9 @@ export default defineConfig({
     setupFiles: [path.resolve(__dirname, './runner/load-env.ts')],
     globals: false,
     testTimeout: 120_000,
-    hookTimeout: 300_000,
+    // The whole dataset runs in one beforeAll; at ~50 live cases (Sonnet
+    // summaries + judges, pooled) this needs generous headroom.
+    hookTimeout: 1_200_000,
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
   },

@@ -1,0 +1,33 @@
+{
+  "id": "fu-with-concern-01",
+  "prompt": "family-update",
+  "lang": "en",
+  "tags": ["family", "concern"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Walter",
+    "residentLastName": "Kim",
+    "familyContactName": "Grace",
+    "relationship": "Daughter",
+    "dateRangeStart": "2026-04-01",
+    "dateRangeEnd": "2026-04-03",
+    "notes": [
+      {
+        "created_at": "2026-04-01T17:00:00Z",
+        "author_name": "Tom",
+        "structured_output": "{\"summary\":\"Walter had a quieter day with a smaller appetite.\",\"sections\":[{\"name\":\"Nutrition\",\"text\":\"Ate about half of lunch; declined his afternoon snack.\"},{\"name\":\"Mood & Behavior\",\"text\":\"More withdrawn than usual; preferred to stay in his room.\"}],\"follow_up\":\"Keep an eye on appetite over the next few days.\",\"flags\":[{\"type\":\"appetite_change\",\"reason\":\"Reduced intake at lunch\"}]}"
+      },
+      {
+        "created_at": "2026-04-03T17:00:00Z",
+        "author_name": "Aisha",
+        "structured_output": "{\"summary\":\"Walter brightened up and joined an activity.\",\"sections\":[{\"name\":\"Social Activity\",\"text\":\"Came to the games afternoon and played cards with two other residents.\"},{\"name\":\"Nutrition\",\"text\":\"Ate most of his dinner.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {},
+    "tone": {}
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "cs-fall-and-meds-01",
+  "prompt": "clinician-summary",
+  "lang": "en",
+  "tags": ["clinician", "fall", "medication"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Harold",
+    "residentLastName": "Park",
+    "residentDob": "1942-09-12",
+    "clinicianName": "Dr. Nguyen",
+    "relationship": "Primary care physician",
+    "dateRangeStart": "2026-04-01",
+    "dateRangeEnd": "2026-04-07",
+    "conditions": "hypertension, mild cognitive impairment",
+    "careNotesContext": "Uses a walker. Daughter visits on weekends.",
+    "notes": [
+      {
+        "created_at": "2026-04-02T08:30:00Z",
+        "author_name": "Aisha",
+        "structured_output": "{\"summary\":\"Near-fall getting out of bed.\",\"sections\":[{\"name\":\"Safety\",\"text\":\"Lost balance standing from his chair; lowered himself to the floor, no injury. Alert afterward.\"}],\"follow_up\":\"Monitor mobility.\",\"flags\":[{\"type\":\"fall_risk\",\"reason\":\"Near-fall from chair\"}]}"
+      },
+      {
+        "created_at": "2026-04-04T20:00:00Z",
+        "author_name": "Tom",
+        "structured_output": "{\"summary\":\"Declined evening blood pressure medication.\",\"sections\":[{\"name\":\"Medication Compliance\",\"text\":\"Refused evening antihypertensive, said he felt fine. Took it the following morning.\"}],\"follow_up\":\"Watch adherence.\",\"flags\":[{\"type\":\"medication_refusal\",\"reason\":\"Refused evening dose\"}]}"
+      },
+      {
+        "created_at": "2026-04-06T09:00:00Z",
+        "author_name": "Aisha",
+        "structured_output": "{\"summary\":\"Some confusion in the morning.\",\"sections\":[{\"name\":\"Mood & Behavior\",\"text\":\"Disoriented to time on waking; oriented again after breakfast.\"}],\"follow_up\":\"None noted.\",\"flags\":[{\"type\":\"confusion\",\"reason\":\"Morning disorientation\"}]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {}
+  }
+}

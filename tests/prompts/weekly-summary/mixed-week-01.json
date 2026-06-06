@@ -1,0 +1,40 @@
+{
+  "id": "ws-mixed-week-01",
+  "prompt": "weekly-summary",
+  "lang": "en",
+  "tags": ["weekly"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Walter",
+    "residentLastName": "Kim",
+    "conditions": "type 2 diabetes",
+    "careNotesContext": "Enjoys puzzles and the garden.",
+    "weekStart": "2026-04-01",
+    "weekEnd": "2026-04-07",
+    "notes": [
+      {
+        "created_at": "2026-04-01T17:00:00Z",
+        "author_name": "Tom",
+        "shift": "afternoon",
+        "structured_output": "{\"summary\":\"Smaller appetite, quieter mood.\",\"sections\":[{\"name\":\"Nutrition\",\"text\":\"Ate about half of lunch.\"},{\"name\":\"Mood & Behavior\",\"text\":\"Withdrawn; stayed in his room.\"}],\"follow_up\":\"Watch appetite.\",\"flags\":[{\"type\":\"appetite_change\",\"reason\":\"Half lunch\"}]}"
+      },
+      {
+        "created_at": "2026-04-03T09:00:00Z",
+        "author_name": "Aisha",
+        "shift": "morning",
+        "structured_output": "{\"summary\":\"Near-fall in the bathroom.\",\"sections\":[{\"name\":\"Safety\",\"text\":\"Slipped reaching for a towel, steadied himself on the rail, no injury.\"}],\"follow_up\":\"Monitor.\",\"flags\":[{\"type\":\"fall_risk\",\"reason\":\"Near-fall\"}]}"
+      },
+      {
+        "created_at": "2026-04-06T17:00:00Z",
+        "author_name": "James",
+        "shift": "afternoon",
+        "structured_output": "{\"summary\":\"Brighter, social day.\",\"sections\":[{\"name\":\"Social Activity\",\"text\":\"Played cards with two residents.\"},{\"name\":\"Nutrition\",\"text\":\"Ate most of dinner.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {}
+  }
+}

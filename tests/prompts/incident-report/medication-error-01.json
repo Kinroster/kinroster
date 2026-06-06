@@ -1,0 +1,18 @@
+{
+  "id": "ir-medication-error-01",
+  "prompt": "incident-report",
+  "lang": "en",
+  "tags": ["incident", "medication"],
+  "input": {
+    "residentFirstName": "Eleanor",
+    "residentLastName": "Ruiz",
+    "conditions": "type 2 diabetes, hypertension",
+    "timestamp": "2026-04-06T09:15:00Z",
+    "caregiverName": "Tom",
+    "rawInput": "at the 8am med pass i realised eleanor had been handed the blister pack for the resident in the next room. she had taken one tablet before i noticed. i stopped her, called the nurse line straight away, they said to monitor and they would inform the physician. eleanor felt fine, no complaints."
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true
+  }
+}
