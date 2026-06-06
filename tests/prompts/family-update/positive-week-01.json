@@ -28,7 +28,7 @@
     "schemaValid": true,
     "mustNotContainDiagnosis": true,
     "faithfulness": {
-      "minScore": 0.7
+      "minScore": 0.8
     },
     "tone": {}
   }
