@@ -1,0 +1,21 @@
+{
+  "id": "sn-normal-positive-day-01",
+  "prompt": "shift-note",
+  "lang": "en",
+  "tags": ["normal", "mood", "nutrition"],
+  "input": {
+    "residentFirstName": "Dorothy",
+    "residentLastName": "Chen",
+    "careNotesContext": "Dorothy responds well to outdoor activities. Her daughter Sarah calls daily around 11 AM.",
+    "conditions": "dementia, diabetes",
+    "timestamp": "2026-04-05T17:00:00Z",
+    "caregiverName": "James",
+    "rawInput": "dorothy was in good spirits today, ate all her lunch, went for a short walk in the garden before lunch. daughter called around 11 and she perked right up. good afternoon overall"
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
+  }
+}

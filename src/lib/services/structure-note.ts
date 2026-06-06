@@ -14,16 +14,17 @@
 //     Non-retryable flips structuring_giving_up immediately. Retryable flips
 //     it once attempts >= MAX_ATTEMPTS.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { callClaudeWithUsage, parseJsonResponse } from "@/lib/claude";
-import { redactPhiText } from "@/lib/redaction";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { callClaudeWithUsage, parseJsonResponse } from '@/lib/claude';
+import { redactPhiText } from '@/lib/redaction';
 import {
   SHIFT_NOTE_SYSTEM_PROMPT,
   buildShiftNoteUserPromptParts,
   type StructuredNoteOutput,
-} from "@/lib/prompts/shift-note";
-import type { ResidentLocaleContext } from "@/lib/i18n/locale";
-import { inngest } from "@/lib/inngest/client";
+} from '@/lib/prompts/shift-note';
+import { zShiftNoteOutput } from '@/lib/schemas';
+import type { ResidentLocaleContext } from '@/lib/i18n/locale';
+import { inngest } from '@/lib/inngest/client';
 
 export const MAX_STRUCTURING_ATTEMPTS = 5;
 
@@ -55,7 +56,7 @@ export interface StructureNoteResult {
 function isRetryableError(err: unknown): boolean {
   if (err instanceof Error) {
     const maybeStatus = (err as { status?: unknown }).status;
-    if (typeof maybeStatus === "number") {
+    if (typeof maybeStatus === 'number') {
       if (maybeStatus === 429) return true;
       if (maybeStatus >= 500 && maybeStatus < 600) return true;
       return false;
@@ -63,11 +64,11 @@ function isRetryableError(err: unknown): boolean {
     // No status → likely a network / abort / timeout — retry.
     const msg = err.message.toLowerCase();
     if (
-      msg.includes("timeout") ||
-      msg.includes("network") ||
-      msg.includes("fetch failed") ||
-      msg.includes("econnreset") ||
-      msg.includes("aborted")
+      msg.includes('timeout') ||
+      msg.includes('network') ||
+      msg.includes('fetch failed') ||
+      msg.includes('econnreset') ||
+      msg.includes('aborted')
     ) {
       return true;
     }
@@ -84,14 +85,12 @@ interface NoteRow {
   organization_id: string;
   resident_id: string;
   structuring_attempts: number;
-  residents:
-    | {
-        first_name: string;
-        last_name: string;
-        care_notes_context: string | null;
-        conditions: string | null;
-      }
-    | null;
+  residents: {
+    first_name: string;
+    last_name: string;
+    care_notes_context: string | null;
+    conditions: string | null;
+  } | null;
 }
 
 export async function structureNote(
@@ -103,18 +102,18 @@ export async function structureNote(
   // role client (no user); the route uses an authed client whose RLS already
   // gates org membership.
   const { data: noteData } = await supabase
-    .from("notes")
+    .from('notes')
     .select(
-      "id, raw_input, created_at, author_id, organization_id, resident_id, structuring_attempts, residents(first_name, last_name, care_notes_context, conditions)"
+      'id, raw_input, created_at, author_id, organization_id, resident_id, structuring_attempts, residents(first_name, last_name, care_notes_context, conditions)'
     )
-    .eq("id", noteId)
+    .eq('id', noteId)
     .single();
 
   const note = noteData as NoteRow | null;
   if (!note) {
     return {
       success: false,
-      error: "Note not found",
+      error: 'Note not found',
       retryable: false,
       attempts: 0,
       gaveUp: false,
@@ -125,7 +124,7 @@ export async function structureNote(
   if (!resident) {
     return {
       success: false,
-      error: "Resident not found",
+      error: 'Resident not found',
       retryable: false,
       attempts: note.structuring_attempts ?? 0,
       gaveUp: false,
@@ -138,18 +137,18 @@ export async function structureNote(
   // per user click.
   const newAttempts = (note.structuring_attempts ?? 0) + 1;
   await supabase
-    .from("notes")
+    .from('notes')
     .update({
       structuring_attempts: newAttempts,
       last_structuring_attempt_at: new Date().toISOString(),
     })
-    .eq("id", noteId);
+    .eq('id', noteId);
 
   // 3. Author name (best-effort; falls back to "Unknown").
   const { data: author } = await supabase
-    .from("users")
-    .select("full_name")
-    .eq("id", note.author_id)
+    .from('users')
+    .select('full_name')
+    .eq('id', note.author_id)
     .single();
 
   // 4. Call Claude, parse, persist on success. The user prompt is split
@@ -165,12 +164,9 @@ export async function structureNote(
       careNotesContext: resident.care_notes_context
         ? redactPhiText(resident.care_notes_context)
         : null,
-      conditions: resident.conditions
-        ? redactPhiText(resident.conditions)
-        : null,
+      conditions: resident.conditions ? redactPhiText(resident.conditions) : null,
       timestamp: note.created_at,
-      caregiverName:
-        (author as { full_name: string } | null)?.full_name || "Unknown",
+      caregiverName: (author as { full_name: string } | null)?.full_name || 'Unknown',
       rawInput: redactPhiText(note.raw_input),
       localeContext: options.localeContext ?? undefined,
     });
@@ -179,10 +175,13 @@ export async function structureNote(
       systemPrompt: SHIFT_NOTE_SYSTEM_PROMPT,
       userPromptCachedPrefix: cachedPrefix,
       userPrompt: volatileTail,
-      cacheTtl: "1h",
+      cacheTtl: '1h',
     });
 
-    const structured = parseJsonResponse<StructuredNoteOutput>(raw);
+    // Validate against the shared schema: a shape the prompt should never emit
+    // (missing field, bad enum) now throws here and is classified non-retryable
+    // below, surfacing as is_structured=false instead of a silent type-lie.
+    const structured: StructuredNoteOutput = parseJsonResponse(raw, zShiftNoteOutput);
 
     const hasFlags = !!(structured.flags && structured.flags.length > 0);
     const sections = Array.isArray(structured.sections) ? structured.sections : [];
@@ -190,21 +189,21 @@ export async function structureNote(
     const baseMetadata: Record<string, unknown> = {
       categories: sections.map((s) => s.name),
       flags: structured.flags || [],
-      ai_classification: hasFlags ? "possible_incident" : "routine",
-      model_used: "claude-sonnet-4-6",
+      ai_classification: hasFlags ? 'possible_incident' : 'routine',
+      model_used: 'claude-sonnet-4-6',
       tokens_used: {
         input: usage.input_tokens,
         output: usage.output_tokens,
         cache_read: usage.cache_read_input_tokens,
         cache_creation: usage.cache_creation_input_tokens,
       },
-      structured_output_version: "v2",
+      structured_output_version: 'v2',
     };
 
     const metadata = { ...baseMetadata, ...(options.extraMetadata ?? {}) };
 
     await supabase
-      .from("notes")
+      .from('notes')
       .update({
         structured_output: JSON.stringify(structured),
         is_structured: true,
@@ -215,7 +214,7 @@ export async function structureNote(
         sensitive_flag: structured.sensitive_flag === true,
         sensitive_category: structured.sensitive_category ?? null,
       })
-      .eq("id", noteId);
+      .eq('id', noteId);
 
     // Phase 1: kick off the per-resident conversation-thread updater.
     // Fire-and-forget — Inngest enforces per-resident concurrency=1
@@ -224,7 +223,7 @@ export async function structureNote(
     // intentionally don't fail structuring if the event-send fails.
     try {
       await inngest.send({
-        name: "thread/note-structured",
+        name: 'thread/note-structured',
         data: {
           noteId: note.id,
           residentId: note.resident_id,
@@ -232,7 +231,7 @@ export async function structureNote(
         },
       });
     } catch (sendErr) {
-      console.error("thread/note-structured event send failed", {
+      console.error('thread/note-structured event send failed', {
         noteId: note.id,
         error: sendErr instanceof Error ? sendErr.message : sendErr,
       });
@@ -246,18 +245,18 @@ export async function structureNote(
       gaveUp: false,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : 'Unknown error';
     const retryable = isRetryableError(err);
     const giveUp = !retryable || newAttempts >= MAX_STRUCTURING_ATTEMPTS;
 
     await supabase
-      .from("notes")
+      .from('notes')
       .update({
         is_structured: false,
         structuring_error: message,
         structuring_giving_up: giveUp,
       })
-      .eq("id", noteId);
+      .eq('id', noteId);
 
     return {
       success: false,

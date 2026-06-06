@@ -1,0 +1,21 @@
+{
+  "id": "sn-edge-id-normal-01",
+  "prompt": "shift-note",
+  "lang": "id",
+  "tags": ["edge", "multilingual", "id"],
+  "input": {
+    "residentFirstName": "Budi",
+    "residentLastName": "Santoso",
+    "careNotesContext": null,
+    "conditions": "hipertensi",
+    "timestamp": "2026-04-07T17:00:00Z",
+    "caregiverName": "Sari",
+    "rawInput": "Pak Budi hari ini tenang, makan siang habis, tidur siang sebentar. Sore hari ikut kegiatan menyanyi bersama dan tampak senang."
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "vs-clean-01",
+  "prompt": "voice-sanity",
+  "lang": "en",
+  "tags": ["clean"],
+  "input": {
+    "transcript": "Okay so this morning Margaret was in a good mood, she ate most of her breakfast, about three quarters of the oatmeal. We went for a short walk down the hall and she did her exercises. She took her morning medication without any fuss. Her daughter called around eleven and that cheered her up."
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedHasConcerns": false
+  }
+}

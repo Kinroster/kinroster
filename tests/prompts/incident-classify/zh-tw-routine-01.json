@@ -1,0 +1,13 @@
+{
+  "id": "ic-zh-tw-routine-01",
+  "prompt": "incident-classify",
+  "lang": "zh-TW",
+  "tags": ["routine", "multilingual", "zh-TW"],
+  "input": {
+    "rawInput": "陳爺爺今天午餐吃得很好，心情愉快，下午在房間裡聽收音機休息。"
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedClassification": "ROUTINE"
+  }
+}
