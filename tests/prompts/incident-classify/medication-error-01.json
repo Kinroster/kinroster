@@ -1,0 +1,13 @@
+{
+  "id": "ic-medication-error-01",
+  "prompt": "incident-classify",
+  "lang": "en",
+  "tags": ["incident", "medication"],
+  "input": {
+    "rawInput": "realised i gave mr lee the 8am pills that belong to the resident next door. called the nurse line right away to check"
+  },
+  "expect": {
+    "schemaValid": true,
+    "allowedClassifications": ["POSSIBLE_INCIDENT", "DEFINITE_INCIDENT"]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "sn-incident-med-refusal-01",
+  "prompt": "shift-note",
+  "lang": "en",
+  "tags": ["incident", "medication"],
+  "input": {
+    "residentFirstName": "Eleanor",
+    "residentLastName": "Ruiz",
+    "careNotesContext": null,
+    "conditions": "type 2 diabetes",
+    "timestamp": "2026-04-06T20:00:00Z",
+    "caregiverName": "Tom",
+    "rawInput": "eleanor refused her evening metformin again, said she was feeling fine and didnt need it. i didnt push. she ate a normal dinner before that"
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedFlags": ["medication_refusal"],
+    "expectedSensitiveFlag": false
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ic-definite-fall-01",
+  "prompt": "incident-classify",
+  "lang": "en",
+  "tags": ["incident", "fall"],
+  "input": {
+    "rawInput": "found Mrs Alvarez on the floor next to her bed, she hit her head on the nightstand and there is a cut above her eyebrow that is bleeding"
+  },
+  "expect": {
+    "schemaValid": true,
+    "allowedClassifications": ["POSSIBLE_INCIDENT", "DEFINITE_INCIDENT"]
+  }
+}
