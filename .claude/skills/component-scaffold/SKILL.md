@@ -72,9 +72,25 @@ export function <Name>Form({ <entity>, ...props }: { /* typed props */ }) {
     const formData = new FormData(e.currentTarget);
     try {
       const data = { /* formData.get("field") as string, … */ };
-      const { error } = isEditing
-        ? await supabase.from("<table>").update(data).eq("id", <entity>.id)
-        : await supabase.from("<table>").insert(data);
+
+      // On INSERT, org-scoped tables REQUIRE organization_id — the RLS
+      // INSERT policy is WITH CHECK (organization_id = get_user_org_id() …),
+      // so an insert without it is rejected. Fetch the caller's org (mirrors
+      // resident-form.tsx). Not needed on UPDATE (the row is already scoped).
+      let error;
+      if (isEditing) {
+        ({ error } = await supabase.from("<table>").update(data).eq("id", <entity>.id));
+      } else {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const { data: appUser } = await supabase
+          .from("users")
+          .select("organization_id")
+          .eq("id", authUser!.id)
+          .single();
+        ({ error } = await supabase
+          .from("<table>")
+          .insert({ ...data, organization_id: appUser!.organization_id }));
+      }
       if (error) throw error;
       toast.success(isEditing ? "Updated" : "Created");
       router.push("<destination>");
@@ -183,6 +199,9 @@ tsc --noEmit` and wire it into its parent page.
 - **`"all"` Select pattern**, never an empty-string `SelectItem` value.
 - **Authenticated client** `createClient()` from `@/lib/supabase/client` for
   browser components — never the service-role/admin client in client code.
+- **Include `organization_id` on INSERT** for org-scoped tables (fetch the
+  caller's org first) — the RLS INSERT policy requires it, so an insert
+  without it is silently rejected. Not needed on UPDATE.
 - **Don't invent domain fields or business logic.** Scaffold the structure;
   ask for the real fields.
 
