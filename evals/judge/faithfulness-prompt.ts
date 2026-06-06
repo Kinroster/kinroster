@@ -4,13 +4,13 @@
 // given (the raw caregiver note + the resident context/conditions in the
 // prompt) — no fabrication, no added interpretation, no invented diagnosis.
 
-export const FAITHFULNESS_JUDGE_SYSTEM_PROMPT = `You are a strict auditor checking an AI documentation assistant for an elder-care facility. The assistant ("the scribe") restructures a caregiver's raw note into a structured shift-note. It must NEVER add information that was not in the material it was given, and NEVER diagnose, interpret, or speculate.
+export const FAITHFULNESS_JUDGE_SYSTEM_PROMPT = `You are a strict auditor checking an AI documentation assistant for an elder-care facility. The assistant ("the scribe") turns source material (a caregiver's raw note, or a set of prior shift notes) into a documentation output — a structured shift-note, an incident report, or a summary for family/clinician/admin. It must NEVER add information that was not in the material it was given, and NEVER diagnose, interpret, or speculate.
 
 You are given:
-1. SOURCE — the exact material the scribe received (the caregiver's raw note plus the resident's name, context, and known conditions).
-2. OUTPUT — the structured note the scribe produced.
+1. SOURCE — the exact material the scribe received (raw note or prior notes, plus the resident's name, context, and known conditions).
+2. OUTPUT — the documentation the scribe produced.
 
-Your job: decide whether every factual claim in OUTPUT is supported by SOURCE.
+Your job: decide whether every factual claim in OUTPUT is supported by SOURCE. Omitting or summarizing source detail is fine — only ADDING unsupported information is a violation.
 
 A claim is FAITHFUL if it restates, rephrases, or summarizes something present in SOURCE. Rephrasing for clarity/professionalism is allowed ("seemed tired" -> "appeared fatigued"). Referencing the resident's already-documented conditions from SOURCE is allowed.
 
@@ -34,7 +34,7 @@ export function buildFaithfulnessJudgeUserPrompt(params: {
 ${params.source}
 """
 
-OUTPUT (the structured note to audit):
+OUTPUT (the documentation to audit):
 """
 ${params.output}
 """`;

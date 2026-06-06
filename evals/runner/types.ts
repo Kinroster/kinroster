@@ -1,6 +1,13 @@
 // Core types shared across the eval harness.
 
-export type PromptId = 'shift-note' | 'incident-classify';
+export type PromptId =
+  | 'shift-note'
+  | 'incident-classify'
+  | 'incident-report'
+  | 'clinician-summary'
+  | 'family-update'
+  | 'weekly-summary'
+  | 'voice-sanity';
 
 export type Lang = 'en' | 'zh-TW' | 'vi' | 'id';
 
@@ -29,6 +36,11 @@ export interface CaseExpect {
   // LLM-as-judge faithfulness check (Slice 2). Presence makes the judge grader
   // applicable; `minScore` overrides the default 0.8 per-case pass bar.
   faithfulness?: { minScore?: number };
+  // LLM-as-judge tone check (Slice 3, family-update). Same shape/semantics.
+  tone?: { minScore?: number };
+  // voice-sanity over-capture classification (Slice 3).
+  expectedHasConcerns?: boolean;
+  expectedCategories?: string[]; // categories that should be present
 }
 
 export interface EvalCase {

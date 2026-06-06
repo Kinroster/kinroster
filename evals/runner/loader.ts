@@ -9,7 +9,15 @@ import type { EvalCase, PromptId } from './types';
 
 const DATASET_DIR = resolve(process.cwd(), 'tests/prompts');
 
-const PROMPT_IDS = ['shift-note', 'incident-classify'] as const;
+const PROMPT_IDS = [
+  'shift-note',
+  'incident-classify',
+  'incident-report',
+  'clinician-summary',
+  'family-update',
+  'weekly-summary',
+  'voice-sanity',
+] as const;
 const CLASSIFICATIONS = ['ROUTINE', 'POSSIBLE_INCIDENT', 'DEFINITE_INCIDENT'] as const;
 
 const zExpect = z
@@ -28,6 +36,12 @@ const zExpect = z
       .object({ minScore: z.number().min(0).max(1).optional() })
       .strict()
       .optional(),
+    tone: z
+      .object({ minScore: z.number().min(0).max(1).optional() })
+      .strict()
+      .optional(),
+    expectedHasConcerns: z.boolean().optional(),
+    expectedCategories: z.array(z.string()).optional(),
   })
   .strict();
 

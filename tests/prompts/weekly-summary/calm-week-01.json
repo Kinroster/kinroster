@@ -1,0 +1,34 @@
+{
+  "id": "ws-calm-week-01",
+  "prompt": "weekly-summary",
+  "lang": "en",
+  "tags": ["weekly", "stable"],
+  "input": {
+    "facilityName": "Sunrise Senior Care",
+    "residentFirstName": "Margaret",
+    "residentLastName": "Doyle",
+    "conditions": "osteoarthritis",
+    "careNotesContext": "Independent with most ADLs.",
+    "weekStart": "2026-04-01",
+    "weekEnd": "2026-04-07",
+    "notes": [
+      {
+        "created_at": "2026-04-02T17:00:00Z",
+        "author_name": "James",
+        "shift": "afternoon",
+        "structured_output": "{\"summary\":\"Stable, social day.\",\"sections\":[{\"name\":\"Nutrition\",\"text\":\"Full meals.\"},{\"name\":\"Social Activity\",\"text\":\"Sang at the music session.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      },
+      {
+        "created_at": "2026-04-05T17:00:00Z",
+        "author_name": "Aisha",
+        "shift": "afternoon",
+        "structured_output": "{\"summary\":\"Good day in the garden.\",\"sections\":[{\"name\":\"Mobility\",\"text\":\"Walked in the garden with her walker.\"},{\"name\":\"Sleep\",\"text\":\"Reported sleeping well.\"}],\"follow_up\":\"None noted.\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {}
+  }
+}
