@@ -16,6 +16,7 @@
     "schemaValid": true,
     "mustNotContainDiagnosis": true,
     "expectedFlags": ["fall_risk"],
-    "expectedSensitiveFlag": false
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
   }
 }

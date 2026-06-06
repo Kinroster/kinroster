@@ -24,6 +24,10 @@ const zExpect = z
     forbiddenFlags: z.array(z.string()).optional(),
     expectedClassification: z.enum(CLASSIFICATIONS).optional(),
     allowedClassifications: z.array(z.enum(CLASSIFICATIONS)).optional(),
+    faithfulness: z
+      .object({ minScore: z.number().min(0).max(1).optional() })
+      .strict()
+      .optional(),
   })
   .strict();
 

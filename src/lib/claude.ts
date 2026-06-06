@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -50,13 +50,16 @@ interface ClaudeCallOptions {
    * within a shift — the 1h cache write costs more but eliminates
    * repeated writes every 5 min.
    */
-  cacheTtl?: "5m" | "1h";
+  cacheTtl?: '5m' | '1h';
+  /**
+   * Sampling temperature passed through to the Anthropic API. Omit to use the
+   * API default. Set to 0 for deterministic output — used by the eval
+   * harness's LLM-as-judge so its verdicts are reproducible.
+   */
+  temperature?: number;
 }
 
-export type ClaudeModel =
-  | "claude-sonnet-4-6"
-  | "claude-haiku-4-5"
-  | (string & {});
+export type ClaudeModel = 'claude-sonnet-4-6' | 'claude-haiku-4-5' | (string & {});
 
 /**
  * Telemetry returned alongside the model output. Anthropic surfaces
@@ -85,35 +88,33 @@ export interface ClaudeResponse {
  * structured.
  */
 export function modelFor(
-  workload: "structure" | "translate" | "classify" | "summarize"
+  workload: 'structure' | 'translate' | 'classify' | 'summarize'
 ): ClaudeModel {
   switch (workload) {
-    case "structure":
-    case "summarize":
-      return "claude-sonnet-4-6";
-    case "translate":
-    case "classify":
-      return "claude-haiku-4-5";
+    case 'structure':
+    case 'summarize':
+      return 'claude-sonnet-4-6';
+    case 'translate':
+    case 'classify':
+      return 'claude-haiku-4-5';
   }
 }
 
-type CacheControl =
-  | { type: "ephemeral" }
-  | { type: "ephemeral"; ttl: "5m" | "1h" };
+type CacheControl = { type: 'ephemeral' } | { type: 'ephemeral'; ttl: '5m' | '1h' };
 
-function cacheControl(ttl: "5m" | "1h" | undefined): CacheControl {
-  if (ttl === "1h") return { type: "ephemeral", ttl: "1h" };
-  return { type: "ephemeral" };
+function cacheControl(ttl: '5m' | '1h' | undefined): CacheControl {
+  if (ttl === '1h') return { type: 'ephemeral', ttl: '1h' };
+  return { type: 'ephemeral' };
 }
 
 type TextBlock = {
-  type: "text";
+  type: 'text';
   text: string;
   cache_control?: CacheControl;
 };
 
 export async function callClaudeWithUsage({
-  model = "claude-sonnet-4-6",
+  model = 'claude-sonnet-4-6',
   systemPrompt,
   systemPromptSuffix,
   userPrompt,
@@ -121,6 +122,7 @@ export async function callClaudeWithUsage({
   maxTokens = 1024,
   cacheSystem = true,
   cacheTtl,
+  temperature,
 }: ClaudeCallOptions): Promise<ClaudeResponse> {
   const cc = cacheControl(cacheTtl);
 
@@ -129,18 +131,14 @@ export async function callClaudeWithUsage({
   // systemPromptSuffix is the second.
   const buildSystem = (): string | TextBlock[] => {
     if (!cacheSystem) {
-      return systemPromptSuffix
-        ? `${systemPrompt}\n\n${systemPromptSuffix}`
-        : systemPrompt;
+      return systemPromptSuffix ? `${systemPrompt}\n\n${systemPromptSuffix}` : systemPrompt;
     }
-    const blocks: TextBlock[] = [
-      { type: "text", text: systemPrompt, cache_control: cc },
-    ];
+    const blocks: TextBlock[] = [{ type: 'text', text: systemPrompt, cache_control: cc }];
     if (systemPromptSuffix) {
       // Suffix is sent uncached so it can vary per call without
       // invalidating the cached prefix. If a caller wants the suffix
       // cached too, lift it into systemPrompt.
-      blocks.push({ type: "text", text: systemPromptSuffix });
+      blocks.push({ type: 'text', text: systemPromptSuffix });
     }
     return blocks;
   };
@@ -153,11 +151,11 @@ export async function callClaudeWithUsage({
     if (!userPromptCachedPrefix) return userPrompt;
     const blocks: TextBlock[] = [
       {
-        type: "text",
+        type: 'text',
         text: userPromptCachedPrefix,
         cache_control: cc,
       },
-      { type: "text", text: userPrompt },
+      { type: 'text', text: userPrompt },
     ];
     return blocks;
   };
@@ -166,10 +164,11 @@ export async function callClaudeWithUsage({
     anthropic.messages.create({
       model,
       max_tokens: maxTokens,
+      ...(temperature !== undefined ? { temperature } : {}),
       system: buildSystem() as unknown as string,
       messages: [
         {
-          role: "user",
+          role: 'user',
           // The SDK types accept string | ContentBlockParam[]; we
           // conditionally build one or the other above.
           content: buildUserContent() as unknown as string,
@@ -178,16 +177,14 @@ export async function callClaudeWithUsage({
     });
 
   const extractText = (response: Awaited<ReturnType<typeof makeCall>>) => {
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("No text response from Claude");
+    const textBlock = response.content.find((block) => block.type === 'text');
+    if (!textBlock || textBlock.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
     return textBlock.text;
   };
 
-  const extractUsage = (
-    response: Awaited<ReturnType<typeof makeCall>>
-  ): ClaudeUsage => {
+  const extractUsage = (response: Awaited<ReturnType<typeof makeCall>>): ClaudeUsage => {
     const u = response.usage as
       | {
           input_tokens?: number;
@@ -215,7 +212,7 @@ export async function callClaudeWithUsage({
     const isRetryable =
       error instanceof Anthropic.APIError
         ? error.status >= 500
-        : error instanceof Error && error.name === "AbortError";
+        : error instanceof Error && error.name === 'AbortError';
 
     if (isRetryable) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
@@ -239,8 +236,51 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<string> {
 export function parseJsonResponse<T>(raw: string): T {
   // Strip markdown code fences if present
   const cleaned = raw
-    .replace(/^```(?:json)?\s*/m, "")
-    .replace(/\s*```$/m, "")
+    .replace(/^```(?:json)?\s*/m, '')
+    .replace(/\s*```$/m, '')
     .trim();
-  return JSON.parse(cleaned) as T;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch (err) {
+    // Robustness fallback: models occasionally emit a valid JSON object
+    // followed by prose (most often when refusing an adversarial instruction,
+    // e.g. "...I did not include that, as it was not a caregiver
+    // observation."). Trailing text breaks JSON.parse and would otherwise mark
+    // the note is_structured=false. Extract the first balanced JSON value and
+    // parse that; clean responses never hit this path.
+    const extracted = extractFirstJson(cleaned);
+    if (extracted !== null) return JSON.parse(extracted) as T;
+    throw err;
+  }
+}
+
+/**
+ * Scan for the first balanced JSON object/array at the start of the string,
+ * respecting string literals and escapes so braces inside strings don't throw
+ * off the depth count. Returns the substring, or null if none is found.
+ */
+function extractFirstJson(s: string): string | null {
+  const start = s.search(/[{[]/);
+  if (start === -1) return null;
+  const open = s[start];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < s.length; i++) {
+    const ch = s[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === open) depth++;
+    else if (ch === close) {
+      depth--;
+      if (depth === 0) return s.slice(start, i + 1);
+    }
+  }
+  return null;
 }

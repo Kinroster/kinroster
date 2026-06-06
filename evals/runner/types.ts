@@ -26,6 +26,9 @@ export interface CaseExpect {
   forbiddenFlags?: string[]; // flag types that must be absent (shift-note)
   expectedClassification?: Classification; // exact (incident-classify)
   allowedClassifications?: Classification[]; // membership (incident-classify)
+  // LLM-as-judge faithfulness check (Slice 2). Presence makes the judge grader
+  // applicable; `minScore` overrides the default 0.8 per-case pass bar.
+  faithfulness?: { minScore?: number };
 }
 
 export interface EvalCase {
@@ -70,4 +73,4 @@ export interface GraderContext {
   parsed: unknown;
 }
 
-export type Grader = (ctx: GraderContext) => GraderResult;
+export type Grader = (ctx: GraderContext) => GraderResult | Promise<GraderResult>;
