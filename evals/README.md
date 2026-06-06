@@ -6,10 +6,11 @@ Quality evals for Kinroster's Claude prompts. Unlike the unit tests in
 `buildUserPrompt → callClaude → parseJsonResponse → graders` — against the live
 Claude API and grades the **properties** of the output.
 
-> **Slice 1 scope:** the two safety-critical prompts, `shift-note` and
-> `incident-classify`, with deterministic graders only (no LLM-as-judge yet).
-> See the plan for the full roadmap (judge layer, remaining 5 prompts, the full
-> 50-case set, and runtime schema validation).
+> **Scope (Slices 1–2):** the two safety-critical prompts, `shift-note` and
+> `incident-classify`, with deterministic graders **plus an LLM-as-judge
+> faithfulness check** on shift-note. Still to come (see the plan): the tone
+> judge wired to a family-facing prompt, the remaining 5 prompts, the full
+> 50-case set, and runtime schema validation.
 
 ## Running
 
@@ -30,10 +31,10 @@ Runs nightly + on demand in CI via `.github/workflows/evals.yml`. Never per-PR
 Two kinds of gate, aggregated across cases (never a per-case hard assert on a
 nondeterministic property):
 
-| Gate type | Graders                                       | Threshold                 |
-| --------- | --------------------------------------------- | ------------------------- |
-| **hard**  | `schema`, `diagnosis`, `leakage`, `sensitive` | 100% of applicable cases  |
-| **rate**  | `flags`, `classification`                     | ≥ 90% of applicable cases |
+| Gate type | Graders                                       | Threshold                    |
+| --------- | --------------------------------------------- | ---------------------------- |
+| **hard**  | `schema`, `diagnosis`, `leakage`, `sensitive` | 100% of applicable cases     |
+| **rate**  | `flags`, `classification`, `faithfulness`     | ≥ 90% / ≥ 80% (faithfulness) |
 
 - **schema** — output parses against the shared Zod schema (`src/lib/schemas/`),
   which also enforces enum validity (disclosure_class / scope_category /
@@ -46,6 +47,13 @@ nondeterministic property):
 - **flags** — expected flag types present, forbidden ones absent.
 - **classification** — incident tier matches `expectedClassification` or is in
   `allowedClassifications`.
+- **faithfulness** _(LLM-as-judge)_ — a separate Haiku call (temperature 0,
+  schema-validated verdict) checks that every claim in the output traces to the
+  source the model was given — no fabrication, no invented diagnosis. This is
+  the real "scribe" guarantee that the deterministic `diagnosis` tripwire only
+  approximates. Applies to cases declaring `"faithfulness": {}` (optional
+  `minScore`, default 0.8). Per-case pass = judge score ≥ `minScore`; the gate
+  requires ≥ 80% of judged cases to pass.
 
 A grader is **not applicable** (and excluded from aggregation) when the case
 doesn't declare the relevant expectation.
@@ -106,7 +114,8 @@ evals/
   vitest.evals.config.ts   isolated config (node, real API, no SDK mocks)
   prompts.eval.ts          the live spec (per-case hard gates + aggregate rates)
   runner/   registry · loader · run-case · report · types · load-env
-  graders/  schema · diagnosis · leakage · sensitive · flags · classification · util
+  graders/  schema · diagnosis · leakage · sensitive · flags · classification · judge · util
+  judge/    faithfulness-prompt · tone-prompt · judge-schema (LLM-as-judge)
 tests/prompts/             the JSON dataset
 src/lib/schemas/           shared Zod (source of truth for output shape)
 ```

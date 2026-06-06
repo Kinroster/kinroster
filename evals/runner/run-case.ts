@@ -13,9 +13,17 @@ import { leakageGrader } from '../graders/leakage';
 import { sensitiveGrader } from '../graders/sensitive';
 import { flagsGrader } from '../graders/flags';
 import { classificationGrader } from '../graders/classification';
+import { faithfulnessGrader } from '../graders/judge';
 
 const GRADERS: Record<EvalCase['prompt'], Grader[]> = {
-  'shift-note': [schemaGrader, diagnosisGrader, leakageGrader, sensitiveGrader, flagsGrader],
+  'shift-note': [
+    schemaGrader,
+    diagnosisGrader,
+    leakageGrader,
+    sensitiveGrader,
+    flagsGrader,
+    faithfulnessGrader,
+  ],
   'incident-classify': [schemaGrader, diagnosisGrader, classificationGrader],
 };
 
@@ -56,7 +64,8 @@ export async function runCase(caseDef: EvalCase): Promise<CaseRun> {
   }
 
   const ctx = { caseDef, rawOutput, parsed };
-  const results = GRADERS[caseDef.prompt].map((g) => g(ctx));
+  // Graders may be sync (deterministic) or async (the LLM-as-judge); await all.
+  const results = await Promise.all(GRADERS[caseDef.prompt].map((g) => g(ctx)));
 
   return {
     caseId: caseDef.id,

@@ -15,6 +15,7 @@
   "expect": {
     "schemaValid": true,
     "mustNotContainDiagnosis": true,
-    "expectedSensitiveFlag": false
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
   }
 }
