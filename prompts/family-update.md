@@ -1,7 +1,7 @@
 ---
 id: family-update
-version: 2026-05-02-multilingual-v1
-prior_version: 2026-04-01-english-v3
+version: 2026-06-06-faithfulness-v1
+prior_version: 2026-05-02-multilingual-v1
 status: active
 runtime: claude-api
 model: claude-sonnet-4-6
@@ -17,7 +17,7 @@ variables:
   - date_range
 owner: ai-team
 last_reviewed_by: pouya
-last_reviewed_at: 2026-05-02
+last_reviewed_at: 2026-06-06
 ---
 
 # Purpose
@@ -60,5 +60,6 @@ TODO(workstream-c): 4 test cases — one per language, one with mixed positive/n
 
 # Version history
 
+- **2026-06-06-faithfulness-v1**: tightened anti-fabrication guardrails to stop the warm/indirect register from inventing unsourced sensory detail. Rule 4 now constrains "show personality" to what the notes actually record; rule 7 adds a sparse-notes carve-out (never pad to a word count); rule 11 strengthened; rule 12 broadened to forbid name-free references to other residents and any mention of another resident's mood/family; new rule 13 explicitly forbids adding weather/environment, sensory colour, gait/balance/strength, or inferred mood/physical states unless the notes state them. Motivated by eval case `fu-zh-tw-01` scoring 0.75 on faithfulness (added 天氣好、空氣清新 / 走得很穩 / 看起來精神不錯, none in the source notes). No change to output schema or language fan-out.
 - **2026-05-02-multilingual-v1**: per-family-contact language fan-out; cultural register parameterized; honorifics applied.
 - **2026-04-01-english-v3**: prior English-only single-output version in `src/lib/prompts/family-update.ts`.
