@@ -25,12 +25,19 @@ function parseCommaSeparated(value: FormDataEntryValue | null): string[] {
     .filter((s) => s.length > 0);
 }
 
-export function ResidentForm({ resident }: { resident?: Resident }) {
+export function ResidentForm({
+  resident,
+  regulatoryRegion,
+}: {
+  resident?: Resident;
+  regulatoryRegion: string;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
   const isEditing = !!resident;
+  const isTaiwanOrg = regulatoryRegion === "pdpa_tw";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -286,33 +293,35 @@ export function ResidentForm({ resident }: { resident?: Resident }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="years_in_taiwan">Years in Taiwan</Label>
-            <Input
-              id="years_in_taiwan"
-              name="years_in_taiwan"
-              type="number"
-              min={0}
-              defaultValue={resident?.years_in_taiwan ?? ""}
-              placeholder="0"
-            />
+        {isTaiwanOrg && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="years_in_taiwan">Years in Taiwan</Label>
+              <Input
+                id="years_in_taiwan"
+                name="years_in_taiwan"
+                type="number"
+                min={0}
+                defaultValue={resident?.years_in_taiwan ?? ""}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lunar_calendar_dob">
+                Lunar calendar DOB
+                <span className="ml-1 text-xs text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                id="lunar_calendar_dob"
+                name="lunar_calendar_dob"
+                type="date"
+                defaultValue={resident?.lunar_calendar_dob ?? ""}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="lunar_calendar_dob">
-              Lunar calendar DOB
-              <span className="ml-1 text-xs text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </Label>
-            <Input
-              id="lunar_calendar_dob"
-              name="lunar_calendar_dob"
-              type="date"
-              defaultValue={resident?.lunar_calendar_dob ?? ""}
-            />
-          </div>
-        </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="religion">Religion</Label>

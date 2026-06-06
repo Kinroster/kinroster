@@ -26,7 +26,10 @@ export default async function EditResidentPage({
   return (
     <div className="px-4 py-6">
       <h2 className="mb-6 text-xl font-semibold">Edit Resident</h2>
-      <ResidentForm resident={resident} />
+      <ResidentForm
+        resident={resident}
+        regulatoryRegion={user.organizations.regulatory_region}
+      />
     </div>
   );
 }
