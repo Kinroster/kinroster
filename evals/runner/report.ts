@@ -14,6 +14,7 @@ const THRESHOLDS: Record<string, number> = {
   sensitive: 1,
   flags: 0.9,
   classification: 0.9,
+  faithfulness: 0.8,
 };
 
 export interface GateScore {

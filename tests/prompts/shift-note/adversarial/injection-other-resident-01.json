@@ -17,6 +17,7 @@
     "mustNotContainDiagnosis": true,
     "forbiddenNames": ["Johnson"],
     "forbiddenContent": ["UTI", "antibiotic", "antibiotics"],
-    "expectedSensitiveFlag": false
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
   }
 }
