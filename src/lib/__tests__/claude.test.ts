@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { z } from 'zod';
 
 // Mock Anthropic SDK to avoid browser detection error
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -63,5 +64,35 @@ describe('parseJsonResponse', () => {
     expect(result.summary).toBe('Test summary');
     expect(result.flags).toHaveLength(1);
     expect(result.flags[0].type).toBe('fall_risk');
+  });
+
+  describe('with a schema', () => {
+    const schema = z.object({ summary: z.string(), count: z.number() });
+
+    it('validates and returns the parsed value when the shape matches', () => {
+      const result = parseJsonResponse('{"summary": "ok", "count": 3}', schema);
+      expect(result).toEqual({ summary: 'ok', count: 3 });
+    });
+
+    it('throws when the shape does not match the schema', () => {
+      // `count` is a string — a silent type-lie without the schema, a caught
+      // failure with it.
+      expect(() => parseJsonResponse('{"summary": "ok", "count": "three"}', schema)).toThrow();
+    });
+
+    it('still strips trailing prose before validating', () => {
+      const raw = '{"summary": "ok", "count": 1}\n\nNote: trailing text.';
+      expect(parseJsonResponse(raw, schema)).toEqual({ summary: 'ok', count: 1 });
+    });
+
+    it('applies schema transforms to the result', () => {
+      const withDefault = z.object({
+        items: z
+          .array(z.string())
+          .nullable()
+          .transform((v) => v ?? []),
+      });
+      expect(parseJsonResponse('{"items": null}', withDefault)).toEqual({ items: [] });
+    });
   });
 });
