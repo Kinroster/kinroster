@@ -1,0 +1,13 @@
+{
+  "id": "vs-zh-tw-clean-01",
+  "prompt": "voice-sanity",
+  "lang": "zh-TW",
+  "tags": ["clean", "multilingual", "zh-TW"],
+  "input": {
+    "transcript": "林奶奶今天早上心情很好，早餐吃了大半碗稀飯，我們在走廊散步了一下，也做了復健運動。早上的藥都有按時吃，沒有抗拒。中午女兒打電話來，她很開心。"
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedHasConcerns": false
+  }
+}

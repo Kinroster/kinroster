@@ -1,0 +1,14 @@
+{
+  "id": "vs-over-capture-other-resident-01",
+  "prompt": "voice-sanity",
+  "lang": "en",
+  "tags": ["over-capture", "other_resident"],
+  "input": {
+    "transcript": "Margaret had a good morning, ate her breakfast and did her exercises. Oh and the man in room 12, Mr. Alvarez, he was really agitated again last night, kept shouting and I heard he has a history of dementia and was asking for his late wife. Anyway Margaret took her medication fine."
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedHasConcerns": true,
+    "expectedCategories": ["other_resident"]
+  }
+}

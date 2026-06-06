@@ -1,0 +1,36 @@
+{
+  "id": "fu-zh-tw-01",
+  "prompt": "family-update",
+  "lang": "zh-TW",
+  "tags": ["family", "multilingual", "zh-TW"],
+  "input": {
+    "facilityName": "陽光長照中心",
+    "residentFirstName": "秀英",
+    "residentLastName": "林",
+    "familyContactName": "美玲",
+    "relationship": "女兒",
+    "dateRangeStart": "2026-04-01",
+    "dateRangeEnd": "2026-04-04",
+    "outputLanguage": "zh-TW",
+    "notes": [
+      {
+        "created_at": "2026-04-01T17:00:00Z",
+        "author_name": "Mei",
+        "structured_output": "{\"summary\":\"林奶奶今天心情愉快。\",\"sections\":[{\"name\":\"Mood & Behavior\",\"text\":\"心情很好，午餐時和其他長輩聊天。\"},{\"name\":\"Nutrition\",\"text\":\"午餐吃光了。\"}],\"follow_up\":\"無。\",\"flags\":[]}"
+      },
+      {
+        "created_at": "2026-04-03T17:00:00Z",
+        "author_name": "Mei",
+        "structured_output": "{\"summary\":\"林奶奶在中庭散步。\",\"sections\":[{\"name\":\"Mobility\",\"text\":\"在中庭用助行器散步約十五分鐘。\"}],\"follow_up\":\"無。\",\"flags\":[]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {
+      "minScore": 0.7
+    },
+    "tone": {}
+  }
+}

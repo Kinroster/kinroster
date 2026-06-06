@@ -1,0 +1,13 @@
+{
+  "id": "ic-vi-near-fall-01",
+  "prompt": "incident-classify",
+  "lang": "vi",
+  "tags": ["incident", "near-fall", "multilingual", "vi"],
+  "input": {
+    "rawInput": "Ông Nam bị trượt chân trong nhà tắm, có vịn được thanh vịn nên không ngã hẳn, không bị thương."
+  },
+  "expect": {
+    "schemaValid": true,
+    "allowedClassifications": ["POSSIBLE_INCIDENT", "DEFINITE_INCIDENT"]
+  }
+}
