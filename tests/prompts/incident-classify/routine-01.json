@@ -1,0 +1,13 @@
+{
+  "id": "ic-routine-01",
+  "prompt": "incident-classify",
+  "lang": "en",
+  "tags": ["routine"],
+  "input": {
+    "rawInput": "had a calm morning, ate a full breakfast and watched tv in the lounge with the other residents"
+  },
+  "expect": {
+    "schemaValid": true,
+    "expectedClassification": "ROUTINE"
+  }
+}

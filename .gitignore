@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# eval harness run artifacts (scorecards + per-case detail)
+/evals/.results/
+
 # next.js
 /.next/
 /out/

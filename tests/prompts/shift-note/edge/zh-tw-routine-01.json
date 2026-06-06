@@ -1,0 +1,20 @@
+{
+  "id": "sn-edge-zh-tw-routine-01",
+  "prompt": "shift-note",
+  "lang": "zh-TW",
+  "tags": ["edge", "multilingual", "zh-TW"],
+  "input": {
+    "residentFirstName": "秀英",
+    "residentLastName": "林",
+    "careNotesContext": null,
+    "conditions": "高血壓",
+    "timestamp": "2026-04-06T06:00:00Z",
+    "caregiverName": "Mei",
+    "rawInput": "林奶奶今天早上心情很好，早餐吃光了一碗稀飯，還在中庭散步了一下。下午女兒來看她，聊得很開心。"
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false
+  }
+}
