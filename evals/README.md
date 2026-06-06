@@ -69,15 +69,28 @@ nondeterministic property):
 > `status` fields) is the right tool and is deferred to a later slice. Until then
 > incident-report is guarded by `schema` + `diagnosis` + `leakage`.
 
+> **Family-update faithfulness runs at a 0.7 bar** (vs 0.8 elsewhere). It is the
+> warm, family-facing, human-reviewed surface (an admin approves every send), and
+> its cultural-register prompt encourages warmth — so minor positive framing
+> ("enjoyed the fresh air") sits closer to the line than a clinical document
+> would. Concrete invented facts are still a real signal and are tracked
+> separately for prompt tuning.
+
+> **The `diagnosis` grader is English-keyword based**, so for non-English output
+> (zh-TW / vi / id summaries) it only catches English terms. The multilingual
+> faithfulness judge is the real cross-language no-fabrication check there.
+
 A grader is **not applicable** (and excluded from aggregation) when the case
 doesn't declare the relevant expectation.
 
-> **Small-N caveat (Slice 1).** With only a handful of cases per rate gate, the
-> 90% threshold effectively behaves as zero-miss (1 miss of 5 = 80% = fail), so
-> a single nondeterministic model slip can turn the nightly red. That is
-> acceptable for a nightly/manual run; as the dataset grows toward the planned
-> 50 cases the threshold gains real headroom. Slice 3 adds the planned 3×
-> rerun-and-average for the flag-accuracy metric to further dampen variance.
+> **Dataset size & small-N caveat.** The dataset currently ships **32 cases**
+> across all 7 prompts (shift-note 9, incident-classify 6, incident-report 3,
+> clinician-summary 3, family-update 4, weekly-summary 3, voice-sanity 4) — short
+> of the doc's 50-case target, which it grows toward incrementally (add a JSON
+> file; no code change). With only a handful of cases per rate gate the 90%
+> threshold still behaves close to zero-miss, so a single nondeterministic model
+> slip can turn the nightly red. The planned 3×-rerun-and-average for the
+> flag-accuracy metric is **not yet implemented** — still a TODO.
 
 > **What the `diagnosis` grader is and isn't.** It is a keyword tripwire for the
 > _act_ of diagnosing or recommending treatment (verbs like "diagnose",

@@ -1,0 +1,21 @@
+{
+  "id": "sn-edge-vi-normal-01",
+  "prompt": "shift-note",
+  "lang": "vi",
+  "tags": ["edge", "multilingual", "vi"],
+  "input": {
+    "residentFirstName": "Hương",
+    "residentLastName": "Trần",
+    "careNotesContext": null,
+    "conditions": "tiểu đường",
+    "timestamp": "2026-04-07T10:00:00Z",
+    "caregiverName": "Linh",
+    "rawInput": "Sáng nay bà Hương vui vẻ, ăn hết bữa sáng, có đi dạo ngoài vườn một chút. Buổi chiều con gái gọi điện, bà rất vui."
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
+  }
+}

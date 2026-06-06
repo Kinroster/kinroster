@@ -1,0 +1,35 @@
+{
+  "id": "ws-zh-tw-01",
+  "prompt": "weekly-summary",
+  "lang": "zh-TW",
+  "tags": ["weekly", "multilingual", "zh-TW"],
+  "input": {
+    "facilityName": "陽光長照中心",
+    "residentFirstName": "秀英",
+    "residentLastName": "林",
+    "conditions": "高血壓",
+    "careNotesContext": "喜歡園藝。",
+    "weekStart": "2026-04-01",
+    "weekEnd": "2026-04-07",
+    "outputLanguage": "zh-TW",
+    "notes": [
+      {
+        "created_at": "2026-04-02T17:00:00Z",
+        "author_name": "Mei",
+        "shift": "afternoon",
+        "structured_output": "{\"summary\":\"穩定的一天。\",\"sections\":[{\"name\":\"Nutrition\",\"text\":\"三餐都吃完。\"},{\"name\":\"Mobility\",\"text\":\"在中庭散步。\"}],\"follow_up\":\"無。\",\"flags\":[]}"
+      },
+      {
+        "created_at": "2026-04-05T09:00:00Z",
+        "author_name": "Mei",
+        "shift": "morning",
+        "structured_output": "{\"summary\":\"早上有點站不穩。\",\"sections\":[{\"name\":\"Safety\",\"text\":\"起身時站不穩，扶著扶手，沒有跌倒。\"}],\"follow_up\":\"持續觀察。\",\"flags\":[{\"type\":\"fall_risk\",\"reason\":\"差點跌倒\"}]}"
+      }
+    ]
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "faithfulness": {}
+  }
+}

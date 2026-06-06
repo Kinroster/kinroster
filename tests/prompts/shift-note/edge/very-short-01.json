@@ -1,0 +1,21 @@
+{
+  "id": "sn-edge-very-short-01",
+  "prompt": "shift-note",
+  "lang": "en",
+  "tags": ["edge", "short"],
+  "input": {
+    "residentFirstName": "Rose",
+    "residentLastName": "Adler",
+    "careNotesContext": null,
+    "conditions": null,
+    "timestamp": "2026-04-07T19:00:00Z",
+    "caregiverName": "Dan",
+    "rawInput": "fine today"
+  },
+  "expect": {
+    "schemaValid": true,
+    "mustNotContainDiagnosis": true,
+    "expectedSensitiveFlag": false,
+    "faithfulness": {}
+  }
+}
