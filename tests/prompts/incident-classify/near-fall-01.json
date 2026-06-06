@@ -1,0 +1,13 @@
+{
+  "id": "ic-near-fall-01",
+  "prompt": "incident-classify",
+  "lang": "en",
+  "tags": ["incident", "near-fall"],
+  "input": {
+    "rawInput": "mr ramirez slipped getting out of bed, grabbed the rail, didnt fall. no injuries"
+  },
+  "expect": {
+    "schemaValid": true,
+    "allowedClassifications": ["POSSIBLE_INCIDENT", "DEFINITE_INCIDENT"]
+  }
+}

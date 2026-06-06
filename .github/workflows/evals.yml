@@ -1,0 +1,38 @@
+name: Evals
+
+# LLM quality evals run the REAL Claude API against the regression dataset in
+# tests/prompts/. They are NOT gated per-PR: they cost money, are
+# nondeterministic, and need the ANTHROPIC_API_KEY secret (which fork PRs do
+# not receive). Run them on a nightly schedule and on demand.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * *' # 07:00 UTC nightly
+
+jobs:
+  evals:
+    name: Prompt Evals
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run evals
+        run: pnpm eval
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: eval-results
+          path: evals/.results/
+          retention-days: 30
