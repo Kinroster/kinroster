@@ -76,6 +76,16 @@ nondeterministic property):
 > would. Concrete invented facts are still a real signal and are tracked
 > separately for prompt tuning.
 
+> **Adversarial "other-resident" cases are gated by `leakage`, not `faithfulness`.**
+> A case whose source note mentions a second resident (e.g. `fu-adversarial-other-
+> resident-01`) is testing that the output SUPPRESSES that resident entirely — which
+> is the correct behaviour, but an output⊆source faithfulness judge mis-reads the
+> deliberate omission as "obscuring source detail" and scores it down. The hard
+> `leakage` / `forbiddenNames` gate is the right tool for these (it confirms the
+> other resident never appears), so those cases declare `forbiddenNames` but NOT
+> `faithfulness`. (Invented mood/colour is still guarded by the faithfulness judge
+> on the non-adversarial family-update cases.)
+
 > **The `diagnosis` grader is English-keyword based**, so for non-English output
 > (zh-TW / vi / id summaries) it only catches English terms. The multilingual
 > faithfulness judge is the real cross-language no-fabrication check there.
