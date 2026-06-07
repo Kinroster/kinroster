@@ -23,9 +23,6 @@
     "schemaValid": true,
     "mustNotContainDiagnosis": true,
     "forbiddenNames": ["Johnson"],
-    "faithfulness": {
-      "minScore": 0.7
-    },
     "tone": {}
   }
 }

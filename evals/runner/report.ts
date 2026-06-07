@@ -86,7 +86,6 @@ export function buildScorecard(runs: CaseRun[]): Scorecard {
 }
 
 export function printScorecard(sc: Scorecard, runs: CaseRun[]): void {
-  /* eslint-disable no-console */
   console.log('\n=== Eval Scorecard ===');
   console.log(`cases: ${sc.totalCases}  api-errors: ${sc.apiErrors}\n`);
 
@@ -111,7 +110,6 @@ export function printScorecard(sc: Scorecard, runs: CaseRun[]): void {
     console.log(failures.join('\n'));
   }
   console.log(`\nOVERALL: ${sc.overallPass ? 'PASS' : 'FAIL'}\n`);
-  /* eslint-enable no-console */
 }
 
 export function writeReport(sc: Scorecard, runs: CaseRun[], timestamp: string): string {
