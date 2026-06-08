@@ -1,7 +1,7 @@
 ---
 id: resident-conversation-thread-updater
-version: 2026-05-22-v1
-prior_version: null
+version: 2026-06-08-concern-promotion-v1
+prior_version: 2026-05-22-v1
 status: active
 runtime: claude-api
 model: claude-haiku-4-5
@@ -19,7 +19,7 @@ variables:
   - new_note_author_type
 owner: ai-team
 last_reviewed_by: pouya
-last_reviewed_at: 2026-05-22
+last_reviewed_at: 2026-06-08
 ---
 
 # Purpose
@@ -74,6 +74,12 @@ The volatile tail (new note structured output + raw excerpt + author info) is un
 9. Family-authored content MUST NOT update `baselines{}`.
 10. Conflicts between family and caregiver same-day → keep BOTH, tagged with source.
 11. `open_questions` carry across parties; status flips to 'addressed' when a later note answers.
+12. Maintain `active_concerns` as the resident's open-issue list: promote any unresolved, recurring, or worsening observation (pain, appetite, mood/behaviour, sleep, mobility/falls) and any flagged topic, derived from the new note AND the carried-forward narrative. This surfaces what the notes state — not inference (rule 3 holds); remove per rule 4. One-offs stay in the narrative.
+
+# Version history
+
+- **2026-06-08-concern-promotion-v1**: added rule 12 — explicit criteria for promoting unresolved/recurring/worsening observations (and flagged topics) into `active_concerns`, derived from the new note and the carried-forward narrative. Fixes `active_concerns` staying empty even when the narrative clearly described ongoing issues (the model was treating promotion as forbidden inference). Behaviour change to the structured slice only; narrative/baselines/summaries unchanged.
+- **2026-05-22-v1**: initial thread-updater (narrative + active_concerns + baselines + recent_incidents + follow_ups + open_questions + family/clinician summaries).
 
 # Failure behavior
 
