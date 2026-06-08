@@ -2,6 +2,12 @@
 
 Cross-prompt release log. Per-prompt history lives in each spec file's **Version history** section.
 
+## 2026-06-08 — thread-updater concern-promotion-v1
+
+Fixes `active_concerns` staying empty even when the thread narrative clearly described ongoing issues (observed live: a resident with documented post-lunch irritability, "feeling left out," and bedtime restlessness still had `active_concerns: []`). The updater was treating promotion of a recurring theme into the structured list as the forbidden inference rule 3 warns against, so everything stayed in the free-text narrative — leaving the voice agent's new `{{active_concerns}}` block empty.
+
+- `resident-conversation-thread-updater`: `2026-05-22-v1` → `2026-06-08-concern-promotion-v1`. Adds rule 12: promote any unresolved, recurring, or worsening observation (pain, appetite, mood/behaviour, sleep, mobility/falls) and any flagged topic into `active_concerns`, derived from the new note AND the carried-forward narrative — explicitly framed as surfacing what the notes state, not inference (rule 3 still holds), with removal per rule 4. Also adds a runtime `THREAD_UPDATE_PROMPT_VERSION` constant (was missing). Structured-slice behaviour only; narrative/baselines/summaries unchanged. Existing threads backfill on their next note update.
+
 ## 2026-06-08 — vapi active-concerns-v1
 
 Completes the `active_concerns` rollout for the live voice intake assistant.

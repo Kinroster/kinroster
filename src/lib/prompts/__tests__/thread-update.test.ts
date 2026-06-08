@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   THREAD_UPDATE_SYSTEM_PROMPT,
+  THREAD_UPDATE_PROMPT_VERSION,
   EMPTY_THREAD_BODY,
   approximateTokens,
   buildThreadUpdatePromptParts,
@@ -15,6 +16,21 @@ describe("THREAD_UPDATE_SYSTEM_PROMPT", () => {
     expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain("family_safe_summary");
     expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain("clinician_clinical_summary");
     expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain("REPORTED");
+  });
+
+  it("instructs promoting unresolved/recurring/worsening issues into active_concerns", () => {
+    // Rule 12 (concern-promotion-v1): the fix for active_concerns staying empty
+    // while the narrative described ongoing issues.
+    expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain(
+      "Maintain active_concerns as the resident's OPEN-issue list"
+    );
+    expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain("recurring across shifts, or worsening");
+    // Must stay grounded — promotion is surfacing, not inference.
+    expect(THREAD_UPDATE_SYSTEM_PROMPT).toContain("rule 3 still holds");
+  });
+
+  it("pins the prompt version to the spec", () => {
+    expect(THREAD_UPDATE_PROMPT_VERSION).toBe("2026-06-08-concern-promotion-v1");
   });
 });
 
