@@ -1,7 +1,7 @@
 ---
 id: vapi-intake-assistant
-version: 2026-05-23-thread-grounding-v1
-prior_version: 2026-05-02-multilingual-v1
+version: 2026-06-08-active-concerns-v1
+prior_version: 2026-05-23-thread-grounding-v1
 status: active
 runtime: vapi-dashboard
 model: gpt-4o-mini
@@ -21,8 +21,20 @@ variables:
   - active_concerns
 owner: ai-team
 last_reviewed_by: pouya
-last_reviewed_at: 2026-05-23
+last_reviewed_at: 2026-06-08
 ---
+
+# Version 2026-06-08-active-concerns-v1
+
+**What changed (prompt body only)**: completes the `{{active_concerns}}` rollout that `2026-05-23-thread-grounding-v1` deferred. The Grounding section now (a) interpolates `{{active_concerns}}` in its own block — the structured open-issue list (concern + trend + since) the server has been sending since v1 but the template never rendered — and (b) drops the inaccurate fixed time-window labels ("last 7 days" / "last 14 days") for neutral ones, since grounding now comes from the rolling conversation thread, not a fixed window. The Variables table also gains the missing `active_concerns` row.
+
+**Vapi-dashboard impact**: ⚠️ **ACTION REQUIRED** — this is a prompt-body change, so the Vapi dashboard assistant(s) must be paste-synced from the new `# Prompt body` below. Until they are, active concerns still reach the model only via `{{recent_notes_summary}}` (the server folds them in there too — see below), so nothing breaks; the dedicated block just won't appear.
+
+**Server note (no code change in this release)**: `active_concerns` is already populated and sent by `buildAssistantOverrides` (`src/lib/vapi.ts`), AND redundantly concatenated into `recent_notes_summary` by `route.ts`. Once the dashboard prompts are confirmed synced to render `{{active_concerns}}`, that concatenation in `route.ts` should be removed as a follow-up so concerns aren't shown twice. Keeping it for now avoids a regression window during paste-sync.
+
+**Behavioural delta**: the assistant gets a clearly-labelled, prioritised list of open concerns to drive follow-up questions, instead of concerns being buried inside the recent-notes blob.
+
+
 
 # Version 2026-05-23-thread-grounding-v1
 
@@ -57,8 +69,9 @@ Triggered when a caregiver presses "start voice call" on the resident page in th
 | `honorific_preference` | string | `residents.honorific_preference` | `阿嬤` |
 | `conditions` | string | `residents.conditions` | "dementia, type 2 diabetes" |
 | `care_context` | string | `residents.care_notes_context` | "responds well to morning walks…" |
-| `recent_notes_summary` | string | last 5 notes' `structured_output.summary` joined | "5/1: pain 3/10. 4/30: ate full meal. …" |
-| `recent_incidents` | string | last 14 days flagged events | "5/1 near-fall getting out of bed (no injury)" |
+| `recent_notes_summary` | string | rolling thread narrative (`resident_conversation_threads.body.narrative`); legacy fallback: last 5 notes' summaries joined | "Stable week; hip pain well-controlled. …" |
+| `recent_incidents` | string | rolling thread `body.recent_incidents`; legacy fallback: flagged events (last 14 days) | "5/1 near-fall getting out of bed (no injury)" |
+| `active_concerns` | string | rolling thread `body.active_concerns` (concern + trend + since) | "left hip pain (worsening, since 5/1)" |
 
 # Prompt body
 
@@ -93,10 +106,13 @@ Never use {{resident_first_name}}'s family name as a first name. For Vietnamese 
 
 You have these recent observations about this resident — use them to anchor follow-up questions, NEVER to fabricate today's status:
 
-Recent notes (last 7 days, summarized):
+Recent notes (summarized):
 {{recent_notes_summary}}
 
-Recent flags / incidents (last 14 days):
+Active concerns (open issues being tracked — make sure you check on each of these today):
+{{active_concerns}}
+
+Recent flags / incidents:
 {{recent_incidents}}
 
 Care context on file:
@@ -189,5 +205,7 @@ N/A — conversational. The end-of-call webhook ingests the full transcript (tur
 
 # Version history
 
+- **2026-06-08-active-concerns-v1**: prompt-body only. Added the `{{active_concerns}}` interpolation (own block in Grounding, prioritised for follow-ups) that thread-grounding-v1 deferred; replaced the stale fixed time-window labels ("last 7 days" / "last 14 days") with neutral ones now that grounding comes from the rolling thread; added the missing `active_concerns` row to the Variables table. Requires Vapi dashboard paste-sync. No server change (the variable was already sent).
+- **2026-05-23-thread-grounding-v1**: grounding context now derived from the per-resident rolling conversation thread (`resident_conversation_threads.body`) instead of stitching last 5 notes + 14 days of incidents; `active_concerns` variable threaded in server-side (template interpolation deferred to active-concerns-v1).
 - **2026-05-02-multilingual-v1**: language-parameterized greeting/wrap-up across en/zh-TW/vi/id; added cultural_register, honorific_preference, family_name/given_name/name_pronunciation handling; injected `recent_notes_summary` + `recent_incidents` grounding; explicit anti-fabrication rule when grounding is empty.
 - **2026-04-01-english-v3**: prior English-only version. Greeting hardcoded "Hi {{caregiver_name}}, this is Kinroster…". Six-topic checklist and incident-acknowledgment present; no grounding variables; no cultural register handling. Lives in Vapi dashboard prior to this release.
