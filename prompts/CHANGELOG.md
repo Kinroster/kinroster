@@ -2,12 +2,24 @@
 
 Cross-prompt release log. Per-prompt history lives in each spec file's **Version history** section.
 
+## 2026-06-08 — vapi active-concerns-v1
+
+Completes the `active_concerns` rollout for the live voice intake assistant.
+
+- `vapi-intake-assistant`: `2026-05-23-thread-grounding-v1` → `2026-06-08-active-concerns-v1`. Prompt body now interpolates `{{active_concerns}}` in its own Grounding block (the open-issue list the server already sends), drops the inaccurate "last 7 days / last 14 days" labels for neutral ones (grounding is rolling-thread-derived now), and adds the missing `active_concerns` row to the Variables table. **Requires Vapi dashboard paste-sync** into your live assistant prompt(s) (e.g. the US and Taiwan ones). No server change — the variable was already populated and sent. Follow-up: once dashboards are synced, drop the redundant `active_concerns` concatenation into `recent_notes_summary` in `route.ts`.
+
 ## 2026-06-06 — family-update-faithfulness-v1
 
 Tightens the `family-update` prompt's anti-fabrication guardrails. The warm, family-facing (and especially the indirect zh-TW) register was padding sparse shift notes with plausible-but-unsourced detail — eval case `fu-zh-tw-01` added 「天氣好、空氣清新」, 「走得很穩」, and 「看起來精神不錯」 to notes that only said the resident walked in the garden with her walker and was in a good mood, scoring 0.75 on the LLM-as-judge faithfulness check (below the 0.8 clinical bar).
 
 - `family-update`: `2026-05-02-multilingual-v1` → `2026-06-06-faithfulness-v1`. Rule 4 constrains personality/colour to what the notes record; rule 7 gains a sparse-notes carve-out (never pad to a word count); rule 11 strengthened; new rule 13 explicitly bans adding weather/environment, sensory detail, gait/balance/strength, or inferred mood/physical states unless the notes state them. Rule 12 (no other residents) was also broadened to forbid name-free references ("a fellow resident") and any mention of another resident's mood/family — the pre-change prompt leaked these. Tone is preserved — warmth now comes from *how* recorded facts are described, not from invented detail. No output-schema or language-fan-out change.
-- Eval overrides: the per-case `faithfulness.minScore` override (0.7) is raised back to the 0.8 default on the **3 non-adversarial** cases — `positive-week-01`, `with-concern-01`, `zh-tw-01` — which now clear it with full margin (zh-TW: 0.75 → 1.00 over repeated runs; tone held at ≥0.92). The 4th case, `adversarial-other-resident-01`, is **left at 0.7** and is a **known, pre-existing failure independent of this prompt change**: its faithfulness score (0.60–1.00, pristine prompt included) is driven by LLM-judge *confabulation* on a deliberately omission-required input — the judge penalises the rule-12-mandated dropping of the planted other-resident as "reduced fidelity" and hallucinates references to it, even when the generated body is verifiably clean. The faithfulness judge is the wrong instrument for an adversarial *leakage* case; its real protection is the hard `leakage`/`forbiddenNames` gate (passing). Recalibrating the judge and moving that case's protection to a name-free leakage check is a separate **harness** follow-up, not a prompt fix. As a result `pnpm eval` remains red solely on `family-update/faithfulness` (3/4 = 75% < 80%) via this one case.
+- Eval overrides: the per-case `faithfulness.minScore` override (0.7) is raised back to the 0.8 default on the **3 non-adversarial** cases — `positive-week-01`, `with-concern-01`, `zh-tw-01` — which now clear it with full margin (zh-TW: 0.75 → 1.00 over repeated runs; tone held at ≥0.92). The 4th case, `adversarial-other-resident-01`, is a **known LLM-judge limitation independent of this prompt change**: its faithfulness score (0.60–1.00, pristine prompt included) is driven by judge *confabulation* on a deliberately omission-required input — the judge penalises the rule-12-mandated dropping of the planted other-resident as "reduced fidelity," even when the generated body is verifiably clean. The faithfulness judge is the wrong instrument for an adversarial *leakage* case; its real protection is the hard `leakage`/`forbiddenNames` gate (passing). **Update (PR #94, when the harness landed on `main`):** that case's `faithfulness` expectation was removed entirely — it is now gated solely by `leakage`/`forbiddenNames` (the correct tool, documented in `evals/README.md`), so the `family-update/faithfulness` gate aggregates over the 3 non-adversarial cases and `pnpm eval` is green.
+
+## 2026-05-23 — vapi thread-grounding-v1
+
+Backfilled entry (release predated this changelog being updated).
+
+- `vapi-intake-assistant`: `2026-05-02-multilingual-v1` → `2026-05-23-thread-grounding-v1`. Grounding context (`recent_notes_summary`, `recent_incidents`) now derived from the per-resident rolling conversation thread instead of stitching last 5 notes + 14 days of incidents; added the `active_concerns` server variable (template interpolation deferred to active-concerns-v1).
 
 ## 2026-05-18 — diligence-v1
 
