@@ -56,6 +56,7 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   visibleTo?: (role: string) => boolean;
+  desktopOnly?: boolean;
 };
 
 const isAdminRole = (role: string) =>
@@ -66,7 +67,7 @@ const isBillingCapable = (role: string) =>
   isAdminRole(role) || role === "billing_staff";
 
 const primaryNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, desktopOnly: true },
   { href: "/today", label: "Today", icon: CalendarDays, visibleTo: isClinicalRole },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/residents", label: "Residents", icon: Users },
@@ -283,6 +284,7 @@ export function AppShell({
         <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
           <div className="flex h-16 items-center justify-around">
             {primaryNav.map((item) => {
+              if (item.desktopOnly) return null;
               if (item.visibleTo && !item.visibleTo(role)) return null;
               const active = isActive(item.href);
               return (

@@ -1,5 +1,4 @@
-// Deepgram REST transcription for the diligence flow. Unlike the
-// caregiver-note path (which uses Whisper via /api/transcribe), diligence
+// Deepgram REST transcription for the diligence flow. Diligence
 // recordings are uploaded conversations that may code-switch between
 // English and Farsi. Deepgram's nova-3 with `multi` language handles that
 // directly and also gives us speaker diarization + utterance segments,
