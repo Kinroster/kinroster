@@ -63,13 +63,29 @@ findable in Facebook groups.)*
   enough to actually drive referral behavior, or do happy operators just stay quiet?
   *(tests the incentive structure in `go-to-market.md`)*
 
-## 5. Pricing & deal mechanics
-*(Tests $149/mo flat pricing and free-lifetime pilots.)*
+## 5. Pricing strategy
+*(We have NOT settled on a price — `market-analysis.md` floats $149/mo flat, but the
+goal of this section is to use her to figure out the right number and model, not to
+validate ours. Hold the $149 figure back at first; ask her to price it cold, then see
+where she lands versus our hypothesis.)*
 
-- Does $149/month flat read as a "serious, professional tool" to this buyer, or as
-  "too cheap to be trustworthy"?
-- We're giving the first 5 facilities free lifetime access for feedback. Smart, or does
-  it anchor expectations and attract the wrong kind of pilot?
+- If a tool saved a small RCFE owner a couple of hours a day on documentation and kept
+  families informed, what would you expect them to actually pay per month? Where's the
+  ceiling before they balk, and where's the floor where they assume it's junk?
+- How does this buyer reason about a recurring software bill — per facility, per bed,
+  per resident, per caregiver seat? Which model do operators understand and resent
+  least?
+- Is flat monthly pricing right for a home with variable beds/staff, or do operators
+  expect to "pay for what they use"? What have you seen work in home health / hospice?
+- What's the real anchor in their head — a cable bill, a payroll line, an EHR
+  subscription, the cost of one citation? What should we be comparing ourselves to?
+- Does price signal quality to this buyer, or are they purely cost-driven? Is there a
+  number that's *too cheap* to be taken seriously in a compliance-sensitive market?
+- *(Only after she's given her own number)* We've been modeling around $149/month flat
+  — does that land where you'd expect, too high, or leaving money on the table?
+- On deal mechanics: we're giving the first 5 facilities free lifetime access for
+  feedback. Smart, or does it anchor expectations and attract the wrong kind of pilot?
+  What's a better early-pilot offer?
 
 ## 6. Competition / channel risk
 *(Tests `competitive-intelligence.md`.)*
