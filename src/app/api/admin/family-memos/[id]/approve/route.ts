@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
 import { inngest } from "@/lib/inngest/client";
+import { transcribeAudioBlob } from "@/lib/transcription";
 
 // Phase 4: admin moderation — approve a pending family voice memo.
 //
@@ -107,33 +108,10 @@ export async function POST(
     );
   }
 
-  // Whisper.
+  // Transcribe with Deepgram (same provider Vapi uses for live calls).
   let transcript = "";
   try {
-    const whisperForm = new FormData();
-    whisperForm.append("file", audioBlob, "memo.webm");
-    whisperForm.append("model", "whisper-1");
-    const whisperRes = await fetch(
-      "https://api.openai.com/v1/audio/transcriptions",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        body: whisperForm,
-      }
-    );
-    if (!whisperRes.ok) {
-      const err = await whisperRes.text();
-      await admin
-        .from("family_voice_memos")
-        .update({ transcription_error: err.slice(0, 500) })
-        .eq("id", memoId);
-      return NextResponse.json(
-        { error: "Transcription failed", details: err },
-        { status: 502 }
-      );
-    }
-    const whisperJson = (await whisperRes.json()) as { text?: string };
-    transcript = (whisperJson.text ?? "").trim();
+    transcript = await transcribeAudioBlob(audioBlob);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await admin

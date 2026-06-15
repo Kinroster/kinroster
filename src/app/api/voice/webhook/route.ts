@@ -220,6 +220,66 @@ export async function POST(request: NextRequest) {
       .update({ note_id: note.id })
       .eq("id", session.id);
 
+    // Process any incidents and symptoms queued by tool calls during the call.
+    // These were stored in session metadata because incident_report requires a
+    // note_id, which only exists now that the note row has been created.
+    const sessionMeta = (session as unknown as { metadata?: Record<string, unknown> | null })
+      ?.metadata ?? {};
+
+    const pendingIncidents = Array.isArray(sessionMeta.pending_incidents)
+      ? (sessionMeta.pending_incidents as Array<{
+          resident_id: string;
+          description: string;
+          severity: string;
+          incident_type: string;
+        }>)
+      : [];
+
+    if (pendingIncidents.length > 0) {
+      const incidentRows = pendingIncidents.map((inc) => ({
+        note_id: note.id,
+        organization_id: session.organization_id,
+        resident_id: inc.resident_id,
+        report_text: inc.description,
+        incident_type: inc.incident_type ?? "general",
+        severity: (["low", "medium", "high"].includes(inc.severity) ? inc.severity : "low") as
+          | "low"
+          | "medium"
+          | "high",
+        status: "open" as const,
+      }));
+      await supabase.from("incident_reports").insert(incidentRows);
+
+      // Mark the note as flagged so the UI shows the incident banner.
+      await supabase
+        .from("notes")
+        .update({ flagged_as_incident: true })
+        .eq("id", note.id);
+    }
+
+    // Pending symptoms get prepended to the raw transcript as structured
+    // context so the AI structuring pass picks them up even if the caregiver
+    // didn't repeat them verbally at the end of the call.
+    const pendingSymptoms = Array.isArray(sessionMeta.pending_symptoms)
+      ? (sessionMeta.pending_symptoms as Array<{
+          description: string;
+          body_area?: string | null;
+        }>)
+      : [];
+
+    if (pendingSymptoms.length > 0) {
+      const symptomBlock =
+        "[Symptoms logged during call]\n" +
+        pendingSymptoms
+          .map((s) => `- ${s.description}${s.body_area ? ` (${s.body_area})` : ""}`)
+          .join("\n");
+      // Prepend to raw_input so the structuring LLM sees them explicitly.
+      await supabase
+        .from("notes")
+        .update({ raw_input: `${symptomBlock}\n\n${transcript}` })
+        .eq("id", note.id);
+    }
+
     // Locale context for multilingual structuring. Existing US/HIPAA orgs
     // with no demographic fields populated still produce identical English
     // output — buildCulturalRegisterBlock returns minimal/empty blocks when
