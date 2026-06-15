@@ -19,6 +19,43 @@ so she can stress-test our riskiest assumptions better than almost anyone.
 
 ---
 
+## How to introduce the idea to her
+*(She's an industry insider, not a customer — don't pitch, frame a problem she knows
+cold and invite her read. Lead with the outcome, not "AI." Be honest about stage.)*
+
+**A 30-second opener you can say out loud:**
+
+> "I'll keep this short because I really want your take, not to pitch you. Small
+> residential care homes — the 6-to-20-bed RCFEs and adult family homes — are still
+> running documentation on paper binders and group texts. Owners burn a couple of
+> hours a day rewriting caregiver notes, and families are left in the dark until
+> something goes wrong. We're building a tool that turns a caregiver's quick spoken or
+> typed note into a clean, structured shift record, flags incidents, and keeps
+> families informed — so the home documents better, passes its survey, and the owner
+> gets their evenings back. We're early — pre-launch, lining up our first pilot
+> facilities. You've spent 20 years getting small operators to actually adopt things,
+> so I mostly want to know where this is wrong and how it really gets into their
+> hands."
+
+**Principles behind that opener:**
+- **Sell the outcome, not the tech.** "Documents better, passes survey, gets evenings
+  back" — not "AI documentation platform." (Per `docs/marketing/launch-strategy-2026-05.md`,
+  the buyer doesn't care that it's AI and may be put off by it.)
+- **Name the buyer precisely** so she immediately pictures the operators she knows.
+- **Be honest it's early.** With an advisor, "pre-launch, seeking pilots" earns more
+  candor than overstating traction.
+- **Make the ask "tell me where I'm wrong,"** not "will you buy / partner." That comes
+  later (Section 8) once she's engaged.
+- **Keep it under a minute** so the rest of the call is her talking, not you.
+
+**One-liner version (if she just asks "what is it?"):**
+
+> "It's documentation and family-communication software built specifically for small
+> care homes — it turns a caregiver's quick note into a clean shift record and a
+> family update, so the home stays survey-ready without the owner doing it all by hand."
+
+---
+
 ## 1. Warm-up / her lens
 *(Gets her talking, and quietly reveals how she'd think as an advisor.)*
 
