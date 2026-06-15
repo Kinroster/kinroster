@@ -1,89 +1,122 @@
-import { Mic, FileText, Share2, Lock, Zap, Brain, ArrowDown } from "lucide-react"
+import { Mic, CheckSquare, FileText, ArrowRight } from "lucide-react";
 
-const features = [
+const products = [
   {
-    id: "voice-recording",
+    id: "voice-ai",
     icon: Mic,
-    title: "Voice Recording",
-    description: "Speak naturally about patient care. Our AI understands medical terminology and context."
+    tag: "Voice AI",
+    title: "Answers when you need them",
+    description:
+      "Ask your AI companion anything about care routines, medications, symptoms, or best practices — in plain language, any time of day or night. No hold music. No waiting.",
+    bullets: [
+      "Natural voice conversations, no typing needed",
+      "Understands care context and medical terminology",
+      "Follows up to ensure nothing is missed",
+      "Available 24/7, even offline via app",
+    ],
+    href: "#voice-ai",
+    gradient: "from-primary/20 to-primary/5",
+    glow: "group-hover:shadow-primary/20",
   },
   {
-    id: "ai-processing",
-    icon: Brain,
-    title: "AI Processing",
-    description: "Advanced language models convert your voice notes into structured clinical documentation."
+    id: "task-management",
+    icon: CheckSquare,
+    tag: "Task Management",
+    title: "Stay on top of every care task",
+    description:
+      "Create, assign, and track daily care routines across your whole team. Get reminders, log completions, and see at a glance what's done and what's coming up.",
+    bullets: [
+      "Daily and recurring task scheduling",
+      "Team assignments with completion tracking",
+      "Smart reminders before tasks are due",
+      "Handoff summaries for shift changes",
+    ],
+    href: "#task-management",
+    gradient: "from-cyan-500/20 to-cyan-500/5",
+    glow: "group-hover:shadow-cyan-500/20",
   },
   {
-    id: "smart-documentation",
+    id: "doctor-reports",
     icon: FileText,
-    title: "Smart Documentation",
-    description: "Generate professional notes, care plans, and reports automatically from your recordings."
+    tag: "Doctor Reports",
+    title: "Professional reports in seconds",
+    description:
+      "Kinroster turns your voice notes and care logs into structured clinical summaries ready to share with your doctor — saving hours of manual write-up every week.",
+    bullets: [
+      "Auto-generated from your daily logs",
+      "Formatted for physician review",
+      "Shareable link with access controls",
+      "Covers mood, nutrition, mobility, medications",
+    ],
+    href: "#doctor-reports",
+    gradient: "from-violet-500/20 to-violet-500/5",
+    glow: "group-hover:shadow-violet-500/20",
   },
-  {
-    id: "instant-transcription",
-    icon: Zap,
-    title: "Real-Time Conversation",
-    description: "Talk to an AI assistant that asks follow-up questions and ensures nothing is missed."
-  },
-  {
-    id: "easy-sharing",
-    icon: Share2,
-    title: "Easy Sharing",
-    description: "Share reports with families, healthcare teams, or export to EMR systems seamlessly."
-  },
-  {
-    id: "security",
-    icon: Lock,
-    title: "Compliance-Ready",
-    description: "Append-only audit log, role-based access, revocable magic-link portals for clinician sharing, and 42 CFR Part 2 data segregation — the primitives your security review actually asks for."
-  }
-]
+];
 
 export function Features() {
   return (
-    <section id="features" className="py-12 md:py-20 scroll-mt-20">
-      <div className="mx-auto max-w-6xl">
-        {/* Section Header */}
-        <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm text-muted-foreground">
-            <span>Features</span>
+    <section id="features" className="py-20 md:py-28 scroll-mt-16">
+      <div className="container mx-auto px-4">
+        {/* Section header */}
+        <div className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-muted-foreground">
+            <span>Everything caretakers need</span>
           </div>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Streamlined Clinical Documentation
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl">
+            Three tools. One platform.
           </h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">
-            From voice to documentation in seconds. Our AI-powered platform handles the complexity
-            so you can focus on what matters most — patient care.
+          <p className="mx-auto max-w-2xl text-muted-foreground md:text-lg">
+            Kinroster combines voice AI, task management, and clinical reporting
+            into a single app designed for the way caretakers actually work.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => {
-            const Icon = feature.icon
+        {/* Product cards */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {products.map((product) => {
+            const Icon = product.icon;
             return (
               <a
-                key={feature.id}
-                href={`#${feature.id}`}
-                className="group rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:bg-secondary/30"
+                key={product.id}
+                href={product.href}
+                className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${product.gradient} p-7 transition-all duration-300 hover:border-white/20 hover:shadow-xl ${product.glow}`}
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                {/* Tag */}
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {product.tag}
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
+                </div>
+
+                {/* Icon */}
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-foreground">
                   <Icon className="h-6 w-6" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">
-                  {feature.title}
+
+                {/* Content */}
+                <h3 className="mb-3 text-xl font-semibold text-foreground">
+                  {product.title}
                 </h3>
-                <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-                  {feature.description}
+                <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+                  {product.description}
                 </p>
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  Learn more <ArrowDown className="h-3 w-3" />
-                </span>
+
+                {/* Bullets */}
+                <ul className="space-y-2">
+                  {product.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-2 text-sm">
+                      <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span className="text-muted-foreground">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
               </a>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

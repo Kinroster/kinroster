@@ -739,7 +739,7 @@ export type Database = {
           metadata: Json | null
           note_id: string | null
           organization_id: string
-          resident_id: string
+          resident_id: string | null
           started_at: string | null
           status: string
           updated_at: string
@@ -759,7 +759,7 @@ export type Database = {
           metadata?: Json | null
           note_id?: string | null
           organization_id: string
-          resident_id: string
+          resident_id?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -2142,6 +2142,102 @@ export type Database = {
         }
         Relationships: []
       }
+      care_tasks: {
+        Row: {
+          id: string
+          organization_id: string
+          resident_id: string | null
+          assigned_to: string | null
+          created_by: string
+          title: string
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          priority: string
+          status: string
+          source: string
+          source_voice_session_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          resident_id?: string | null
+          assigned_to?: string | null
+          created_by: string
+          title: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          priority?: string
+          status?: string
+          source?: string
+          source_voice_session_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          resident_id?: string | null
+          assigned_to?: string | null
+          created_by?: string
+          title?: string
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          priority?: string
+          status?: string
+          source?: string
+          source_voice_session_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_tasks_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_tasks_source_voice_session_id_fkey"
+            columns: ["source_voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_voice_memos: {
         Row: {
           id: string
@@ -2373,4 +2469,5 @@ export type ResidentConversationThread = Database["public"]["Tables"]["resident_
 export type ResidentConversationThreadVersion = Database["public"]["Tables"]["resident_conversation_thread_versions"]["Row"];
 export type FamilyUserLink = Database["public"]["Tables"]["family_user_links"]["Row"];
 export type FamilyVoiceMemo = Database["public"]["Tables"]["family_voice_memos"]["Row"];
+export type CareTask = Database["public"]["Tables"]["care_tasks"]["Row"];
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/app-shell";
-import { TrialBanner } from "@/components/trial-banner";
+// import { TrialBanner } from "@/components/trial-banner";
 
 export default async function DashboardLayout({
   children,
@@ -32,11 +32,7 @@ export default async function DashboardLayout({
   const org = (user as { organizations: { subscription_status: string; trial_ends_at: string | null } }).organizations;
 
   return (
-    <>
-      <TrialBanner
-        subscriptionStatus={org.subscription_status}
-        trialEndsAt={org.trial_ends_at}
-      />
+    <> 
       <AppShell user={user}>{children}</AppShell>
     </>
   );

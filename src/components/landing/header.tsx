@@ -1,23 +1,16 @@
 import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
 import { MobileMenuButton } from "./mobile-menu-button";
 
-// Server-rendered. Only the mobile menu toggle is interactive — that
-// lives in the MobileMenuButton client island below.
 export function LandingHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/8 bg-background/80 backdrop-blur-xl">
       <div className="container relative mx-auto flex h-16 items-center justify-between px-4">
         <Logo />
 
-        {/* Desktop Navigation */}
-        <nav
-          aria-label="Primary"
-          className="hidden items-center gap-6 md:flex"
-        >
+        <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
           <a
             href="#features"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -30,16 +23,25 @@ export function LandingHeader() {
           >
             How it Works
           </a>
-          <ThemeToggle />
+          <a
+            href="#testimonials"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Reviews
+          </a>
           <Link href="/login">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
               <LogIn className="h-4 w-4" />
               Sign In
             </Button>
           </Link>
+          <Link href="/signup">
+            <Button size="sm" className="gap-2">
+              Get Started
+            </Button>
+          </Link>
         </nav>
 
-        {/* Mobile Menu — client island */}
         <MobileMenuButton />
       </div>
     </header>
